@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Environment variables (never commit real secrets)
+.env
+
+# Build output
+client/dist/
+
+# Editor/OS
+.DS_Store
+.vscode/
+*.log
