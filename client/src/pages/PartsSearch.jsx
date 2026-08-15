@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
+import PartCard from '../components/PartCard';
 import { apiFetch } from '../api/client';
 
 export default function PartsSearch() {
@@ -56,7 +57,7 @@ export default function PartsSearch() {
   return (
     <div>
       <Navbar active="Find Parts" />
-      <div className="max-w-3xl mx-auto px-6 py-6">
+      <div className="max-w-6xl mx-auto px-6 py-6">
         <h1 className="text-2xl font-medium text-dark-red">Find compatible parts</h1>
         <p className="text-sm text-gray-500 mt-1 mb-5">
           Select your vehicle's make, model, and year to see matching parts.
@@ -114,18 +115,9 @@ export default function PartsSearch() {
         ) : parts.length === 0 ? (
           <p className="text-sm text-gray-400">No compatible parts found for this vehicle.</p>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
             {parts.map((part) => (
-              <div
-                key={part._id}
-                className="bg-light-red-bg border border-primary-red rounded-lg px-5 py-3 flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-medium text-dark-red text-sm">{part.name}</p>
-                  <p className="text-xs text-gray-500 mt-1 capitalize">{part.category}</p>
-                </div>
-                <span className="font-medium text-primary-red text-sm">{`৳${part.price}`}</span>
-              </div>
+              <PartCard key={part._id} part={part} />
             ))}
           </div>
         )}
