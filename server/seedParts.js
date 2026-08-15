@@ -43,6 +43,16 @@ const run = async () => {
       ],
     },
     {
+      name: 'Headlight Set',
+      category: 'electrical',
+      price: 33850,
+      imageUrl: '/images/parts/headlight_hondacity.jpg',
+      compatibleVehicles: [
+        key('Honda', 'CITY', 2020),
+        key('Honda', 'CITY', 2022),
+      ],
+    },
+    {
       name: 'CarbonFiber_HOOD',
       category: 'body',
       price: 111999,
