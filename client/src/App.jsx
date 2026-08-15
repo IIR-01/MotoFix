@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ManageServices from './pages/ManageServices';
 import AdminDashboard from './pages/AdminDashboard';
+import SelectVehicle from './pages/SelectVehicle';
 
 // Pass a role to restrict a route to a single role (e.g. role="admin").
 // Omit it for any route that just needs "logged in, don't care which role".
@@ -18,6 +19,7 @@ function HomeRedirect() {
   const { user } = useAuth();
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
   if (user?.role === 'vendor') return <Navigate to="/services" replace />;
+  if (user?.role === 'customer') return <Navigate to="/customize" replace />;
   return <Navigate to="/login" replace />;
 }
 
@@ -39,6 +41,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute role="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customize"
+        element={
+          <ProtectedRoute role="customer">
+            <SelectVehicle />
           </ProtectedRoute>
         }
       />
