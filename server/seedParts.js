@@ -67,7 +67,7 @@ const run = async () => {
       name: 'Air Filter',
       category: 'engine',
       price: 450,
-      imageUrl: '', // no photo yet
+      imageUrl: '/images/parts/v3_airfilter.jpg', 
       compatibleVehicles: [
         key('Yamaha', 'R15 V3', 2020),
         key('Yamaha', 'R15 V3', 2022),
