@@ -9,7 +9,7 @@ exports.updateAvailability = async (req, res) => {
   const vendor = await User.findByIdAndUpdate(
     req.user.id,
     { availabilityStatus: status },
-    { new: true }
+    { returnDocument: 'after' }
   ).select('-password');
   res.json(vendor);
 };
