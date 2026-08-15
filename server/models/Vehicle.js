@@ -1,16 +1,30 @@
 const mongoose = require('mongoose');
 
-// Reference data for the cascading make -> model -> year dropdowns on the
-// customer-facing Compatible Parts Search feature (Module 1, Hafizur).
+// Shared reference data: powers the cascading make -> model -> year dropdowns
+// on the Compatible Parts Search feature (Module 1, Hafizur) as well as the
+// vehicle customization picker (Module 1, Shihab). Not every vehicle needs
+// every field — a parts-search-only entry can skip bodyType/baseImageUrl.
+const CUSTOMIZATION_CATEGORIES = ['paint_color', 'rims', 'spoiler', 'body_kit', 'brake_caliper', 'decals'];
+
 const vehicleSchema = new mongoose.Schema(
   {
     make: { type: String, required: true, trim: true },
     model: { type: String, required: true, trim: true },
     year: { type: Number, required: true },
+    bodyType: { type: String },
+    baseImageUrl: { type: String },
+    customizationCategories: {
+      type: [String],
+      enum: CUSTOMIZATION_CATEGORIES,
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
 vehicleSchema.index({ make: 1, model: 1, year: 1 }, { unique: true });
 
-module.exports = mongoose.model('Vehicle', vehicleSchema);
+const Vehicle = mongoose.model('Vehicle', vehicleSchema);
+Vehicle.CUSTOMIZATION_CATEGORIES = CUSTOMIZATION_CATEGORIES;
+
+module.exports = Vehicle;
