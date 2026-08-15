@@ -9,6 +9,9 @@ const Part = require('./models/Part');
 
 const VEHICLES = [
   { make: 'Honda', model: 'CBR150R', year: 2020 },
+  { make: 'Honda', model: 'CITY', year: 2020 },
+  { make: 'Honda', model: 'CITY', year: 2022 },
+  { make: 'Mitsubisi', model: 'LANCHER', year: 2017 },
   { make: 'Honda', model: 'CBR150R', year: 2022 },
   { make: 'Honda', model: 'CB Hornet 160R', year: 2021 },
   { make: 'Yamaha', model: 'R15 V3', year: 2020 },
@@ -37,6 +40,16 @@ const run = async () => {
       compatibleVehicles: [
         key('Honda', 'CBR150R', 2020),
         key('Honda', 'CBR150R', 2022),
+      ],
+    },
+    {
+      name: 'CarbonFiber_HOOD',
+      category: 'body',
+      price: 111999,
+      imageUrl: '/images/parts/placeholder.jpg',
+      compatibleVehicles: [
+        key('Mitsubisi', 'LANCHER', 2017),
+        
       ],
     },
     {
