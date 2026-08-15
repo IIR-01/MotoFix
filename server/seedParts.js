@@ -77,7 +77,7 @@ const run = async () => {
       name: 'Rear Shock Absorber',
       category: 'suspension',
       price: 3200,
-      imageUrl: '', // no photo yet
+      imageUrl: '/images/parts/yamaha-r15-v3-shock-absorber.jpeg', // no photo yet
       compatibleVehicles: [key('Yamaha', 'R15 V3', 2022)],
     },
     {
