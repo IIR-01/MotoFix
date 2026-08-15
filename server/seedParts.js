@@ -46,7 +46,7 @@ const run = async () => {
       name: 'CarbonFiber_HOOD',
       category: 'body',
       price: 111999,
-      imageUrl: '/images/parts/placeholder.jpg',
+      imageUrl: '/images/parts/mitsubishi_lancher_2017_carbonfiberhood.webp',
       compatibleVehicles: [
         key('Mitsubisi', 'LANCHER', 2017),
         
