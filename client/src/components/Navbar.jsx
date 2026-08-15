@@ -1,10 +1,19 @@
-const LINKS = [
-  { label: 'Dashboard', path: '/' },
-  { label: 'My Services', path: '/services' },
-  { label: 'Requests', path: '/requests' },
-];
+import { useAuth } from '../context/AuthContext';
+
+const LINKS_BY_ROLE = {
+  vendor: [
+    { label: 'Dashboard', path: '/' },
+    { label: 'My Services', path: '/services' },
+    { label: 'Requests', path: '/requests' },
+  ],
+  admin: [{ label: 'Pending Vendors', path: '/admin' }],
+  customer: [{ label: 'Dashboard', path: '/' }],
+};
 
 export default function Navbar({ active }) {
+  const { user } = useAuth();
+  const links = LINKS_BY_ROLE[user?.role] || [];
+
   return (
     <nav className="bg-primary-red h-[70px] px-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -14,7 +23,7 @@ export default function Navbar({ active }) {
         <span className="text-white font-medium text-lg">MotoFix</span>
       </div>
       <div className="flex gap-2">
-        {LINKS.map((link) => (
+        {links.map((link) => (
           <a
             key={link.label}
             href={link.path}

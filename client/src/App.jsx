@@ -3,10 +3,22 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ManageServices from './pages/ManageServices';
+import AdminDashboard from './pages/AdminDashboard';
 
-function ProtectedRoute({ children }) {
-  const { token } = useAuth();
-  return token ? children : <Navigate to="/login" replace />;
+// Pass a role to restrict a route to a single role (e.g. role="admin").
+// Omit it for any route that just needs "logged in, don't care which role".
+function ProtectedRoute({ children, role }) {
+  const { user, token } = useAuth();
+  if (!token) return <Navigate to="/login" replace />;
+  if (role && user?.role !== role) return <Navigate to="/" replace />;
+  return children;
+}
+
+function HomeRedirect() {
+  const { user } = useAuth();
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user?.role === 'vendor') return <Navigate to="/services" replace />;
+  return <Navigate to="/login" replace />;
 }
 
 function AppRoutes() {
@@ -17,14 +29,22 @@ function AppRoutes() {
       <Route
         path="/services"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute role="vendor">
             <ManageServices />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute role="admin">
+            <AdminDashboard />
           </ProtectedRoute>
         }
       />
       {/* Module 2 (Roadside Assistance Request) and Module 3 features
           get their own routes here as they're built. */}
-      <Route path="/" element={<Navigate to="/services" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
 }

@@ -27,7 +27,7 @@ exports.updateService = async (req, res) => {
   const service = await Service.findOneAndUpdate(
     { _id: req.params.id, vendor: req.user.id }, // scoped to the logged-in vendor
     req.body,
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (!service) return res.status(404).json({ message: 'Service not found' });
   res.json(service);
