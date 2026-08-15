@@ -7,7 +7,7 @@ const LINKS_BY_ROLE = {
     { label: 'Requests', path: '/requests' },
   ],
   admin: [{ label: 'Pending Vendors', path: '/admin' }],
-  customer: [{ label: 'Dashboard', path: '/' }],
+  customer: [{ label: 'Find Parts', path: '/parts' }],
 };
 
 export default function Navbar({ active }) {
