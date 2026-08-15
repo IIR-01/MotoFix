@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     tradeLicense: { type: String },
     verificationStatus: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'rejected', 'suspended'],
       default: 'pending',
     },
     listingFeePaid: { type: Boolean, default: false }, // wired up for real by Hafizur's SSLCommerz feature
