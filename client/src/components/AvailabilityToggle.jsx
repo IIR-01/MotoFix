@@ -9,8 +9,8 @@ export default function AvailabilityToggle({ current, onChange }) {
           onClick={() => onChange(status)}
           className={
             current === status
-              ? 'bg-primary-red text-white px-4 py-2 rounded-full text-sm font-medium'
-              : 'bg-light-red-bg text-dark-red border border-primary-red px-4 py-2 rounded-full text-sm'
+              ? 'bg-primary-red text-white px-5 py-2.5 rounded-full text-sm font-medium'
+              : 'bg-light-red-bg text-dark-red border border-primary-red px-5 py-2.5 rounded-full text-sm font-medium'
           }
         >
           {status === 'Available' ? `\u25CF ${status}` : status}
