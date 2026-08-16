@@ -79,55 +79,65 @@ export default function ManageServices() {
   return (
     <div>
       <Navbar active="My Services" />
-      <div className="max-w-5xl mx-auto px-6 py-6">
-        <div className="flex justify-between items-start mb-6 gap-4">
+      <div className="max-w-4xl mx-auto px-8 py-10">
+        <div className="flex justify-between items-start mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-medium text-dark-red">Manage My Services</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="font-display font-semibold text-3xl text-dark-red">Manage My Services</h1>
+            <p className="text-gray-500 mt-2">
               Configure your available services, pricing, and live status.
             </p>
           </div>
           <AvailabilityToggle current={user?.availabilityStatus || 'Offline'} onChange={handleAvailabilityChange} />
         </div>
 
-        {error && <p className="text-sm text-primary-red mb-4">{error}</p>}
+        {error && (
+          <p className="text-sm text-primary-red bg-light-red-bg border border-primary-red/30 rounded-md px-4 py-3 mb-5">
+            {error}
+          </p>
+        )}
 
         {loading ? (
-          <p className="text-sm text-gray-400 mb-4">Loading…</p>
+          <p className="text-gray-400 mb-6">Loading…</p>
         ) : (
-          <div className="flex flex-col gap-3 mb-4">
+          <div className="flex flex-col gap-4 mb-6">
             {services.map((service) => (
               <ServiceCard key={service._id} service={service} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
             {services.length === 0 && (
-              <p className="text-sm text-gray-400">No services listed yet. Add your first one below.</p>
+              <div className="border border-dashed border-primary-red/30 rounded-xl px-6 py-10 text-center">
+                <p className="font-medium text-dark-red">No services listed yet</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Add the roadside services you offer so customers can find and book you.
+                </p>
+              </div>
             )}
           </div>
         )}
 
         {showForm ? (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-md">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md bg-light-red-bg rounded-xl p-6">
+            <p className="font-medium text-dark-red">{editingId ? 'Edit service' : 'New service'}</p>
             <input placeholder="Service name (e.g. Flat Tire Change)" value={form.serviceName}
               onChange={(e) => setForm({ ...form, serviceName: e.target.value })}
-              className="border border-primary-red rounded px-3 py-2 text-sm" required />
+              className="border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base bg-white" required />
             <input placeholder="Description" value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="border border-primary-red rounded px-3 py-2 text-sm" />
+              className="border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base bg-white" />
             <input type="number" placeholder="Base price (Taka)" value={form.basePrice}
               onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
-              className="border border-primary-red rounded px-3 py-2 text-sm" required />
-            <div className="flex gap-3 items-center">
-              <button type="submit" className="bg-primary-red text-white px-5 py-2 rounded text-sm font-medium">
+              className="border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base bg-white" required />
+            <div className="flex gap-4 items-center pt-1">
+              <button type="submit" className="bg-primary-red hover:bg-dark-red transition-colors text-white px-5 py-2.5 rounded-md text-sm font-medium">
                 {editingId ? 'Save changes' : 'Add service'}
               </button>
               <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY_FORM); }}
-                className="text-dark-red text-sm underline">
+                className="text-dark-red text-sm">
                 Cancel
               </button>
             </div>
           </form>
         ) : (
-          <button onClick={() => setShowForm(true)} className="bg-primary-red text-white px-5 py-2.5 rounded-md text-sm font-medium">
+          <button onClick={() => setShowForm(true)} className="bg-primary-red hover:bg-dark-red transition-colors text-white px-5 py-3 rounded-md text-sm font-medium">
             + Add New Service
           </button>
         )}
