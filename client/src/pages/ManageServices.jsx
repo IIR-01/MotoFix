@@ -13,32 +13,52 @@ export default function ManageServices() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const loadServices = async () => setServices(await apiFetch('/services/mine'));
+  const loadServices = async () => {
+    try {
+      setServices(await apiFetch('/services/mine'));
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadServices();
   }, []);
 
   const handleAvailabilityChange = async (status) => {
-    const updated = await apiFetch('/vendor/availability', {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
-    updateUser({ availabilityStatus: updated.availabilityStatus });
+    try {
+      const updated = await apiFetch('/vendor/availability', {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      updateUser({ availabilityStatus: updated.availabilityStatus });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      await apiFetch(`/services/${editingId}`, { method: 'PUT', body: JSON.stringify(form) });
-    } else {
-      await apiFetch('/services', { method: 'POST', body: JSON.stringify(form) });
+    try {
+      if (editingId) {
+        await apiFetch(`/services/${editingId}`, { method: 'PUT', body: JSON.stringify(form) });
+      } else {
+        await apiFetch('/services', { method: 'POST', body: JSON.stringify(form) });
+      }
+      setForm(EMPTY_FORM);
+      setEditingId(null);
+      setShowForm(false);
+      setError('');
+      loadServices();
+    } catch (err) {
+      setError(err.message);
     }
-    setForm(EMPTY_FORM);
-    setEditingId(null);
-    setShowForm(false);
-    loadServices();
   };
 
   const handleEdit = (service) => {
@@ -48,8 +68,12 @@ export default function ManageServices() {
   };
 
   const handleDelete = async (id) => {
-    await apiFetch(`/services/${id}`, { method: 'DELETE' });
-    loadServices();
+    try {
+      await apiFetch(`/services/${id}`, { method: 'DELETE' });
+      loadServices();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -58,22 +82,28 @@ export default function ManageServices() {
       <div className="max-w-5xl mx-auto px-6 py-6">
         <div className="flex justify-between items-start mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-medium text-dark-red">Manage my services</h1>
+            <h1 className="text-2xl font-medium text-dark-red">Manage My Services</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Set your available roadside services, pricing, and live status.
+              Configure your available services, pricing, and live status.
             </p>
           </div>
           <AvailabilityToggle current={user?.availabilityStatus || 'Offline'} onChange={handleAvailabilityChange} />
         </div>
 
-        <div className="flex flex-col gap-3 mb-4">
-          {services.map((service) => (
-            <ServiceCard key={service._id} service={service} onEdit={handleEdit} onDelete={handleDelete} />
-          ))}
-          {services.length === 0 && (
-            <p className="text-sm text-gray-400">No services listed yet. Add your first one below.</p>
-          )}
-        </div>
+        {error && <p className="text-sm text-primary-red mb-4">{error}</p>}
+
+        {loading ? (
+          <p className="text-sm text-gray-400 mb-4">Loading…</p>
+        ) : (
+          <div className="flex flex-col gap-3 mb-4">
+            {services.map((service) => (
+              <ServiceCard key={service._id} service={service} onEdit={handleEdit} onDelete={handleDelete} />
+            ))}
+            {services.length === 0 && (
+              <p className="text-sm text-gray-400">No services listed yet. Add your first one below.</p>
+            )}
+          </div>
+        )}
 
         {showForm ? (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-md">
@@ -97,8 +127,8 @@ export default function ManageServices() {
             </div>
           </form>
         ) : (
-          <button onClick={() => setShowForm(true)} className="bg-primary-red text-white px-5 py-2.5 rounded text-sm font-medium">
-            + Add new service
+          <button onClick={() => setShowForm(true)} className="bg-primary-red text-white px-5 py-2.5 rounded-md text-sm font-medium">
+            + Add New Service
           </button>
         )}
       </div>

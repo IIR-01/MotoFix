@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const LINKS_BY_ROLE = {
@@ -15,8 +15,14 @@ const LINKS_BY_ROLE = {
 };
 
 export default function Navbar({ active }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const links = LINKS_BY_ROLE[user?.role] || [];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 h-[70px] px-6 flex items-center justify-between">
@@ -24,7 +30,7 @@ export default function Navbar({ active }) {
         <span className="text-black">MOTO</span>
         <span className="text-primary-red">FIX</span>
       </Link>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         {links.map((link) => (
           <Link
             key={link.label}
@@ -38,6 +44,12 @@ export default function Navbar({ active }) {
             {link.label}
           </Link>
         ))}
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 rounded text-sm text-dark-red border border-primary-red/50 ml-1"
+        >
+          Log out
+        </button>
       </div>
     </nav>
   );
