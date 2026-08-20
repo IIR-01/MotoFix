@@ -1,3 +1,4 @@
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const LINKS_BY_ROLE = {
@@ -7,33 +8,48 @@ const LINKS_BY_ROLE = {
     { label: 'Requests', path: '/requests' },
   ],
   admin: [{ label: 'Pending Vendors', path: '/admin' }],
-  customer: [{ label: 'Dashboard', path: '/' }],
+  customer: [
+    { label: 'Customize', path: '/customize' },
+    { label: 'Find Parts', path: '/parts' },
+  ],
 };
 
 export default function Navbar({ active }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const links = LINKS_BY_ROLE[user?.role] || [];
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
-    <nav className="bg-primary-red h-[70px] px-6 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 bg-white rounded-full flex items-center justify-center shrink-0">
-          <span className="text-primary-red font-medium text-sm">M</span>
-        </div>
-        <span className="text-white font-medium text-lg">MotoFix</span>
-      </div>
-      <div className="flex gap-2">
+    <nav className="bg-white border-b border-gray-200 h-[70px] px-6 flex items-center justify-between">
+      <Link to="/" className="font-bold text-lg tracking-tight">
+        <span className="text-black">MOTO</span>
+        <span className="text-primary-red">FIX</span>
+      </Link>
+      <div className="flex items-center gap-2">
         {links.map((link) => (
-          <a
+          <Link
             key={link.label}
-            href={link.path}
-            className={`px-4 py-2 rounded text-sm text-white border ${
-              active === link.label ? 'bg-white/20 border-white' : 'border-white/50'
+            to={link.path}
+            className={`px-4 py-2 rounded text-sm border ${
+              active === link.label
+                ? 'bg-primary-red text-white border-primary-red'
+                : 'text-dark-red border-primary-red/50'
             }`}
           >
             {link.label}
-          </a>
+          </Link>
         ))}
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 rounded text-sm text-dark-red border border-primary-red/50 ml-1"
+        >
+          Log out
+        </button>
       </div>
     </nav>
   );
