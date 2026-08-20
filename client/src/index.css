@@ -4,4 +4,12 @@
   --color-primary-red: #D62839;
   --color-dark-red: #8C1C1C;
   --color-light-red-bg: #FDECEC;
+  --color-ink: #1A1414;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
 }

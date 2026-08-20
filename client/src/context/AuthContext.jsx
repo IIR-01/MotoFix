@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
     const stored = localStorage.getItem('motofix_user');
     return stored ? JSON.parse(stored) : null;
   });
+  const [token, setToken] = useState(() => localStorage.getItem('motofix_token'));
 
   const login = async (email, password) => {
     const data = await apiFetch('/auth/login', {
@@ -16,6 +17,7 @@ export function AuthProvider({ children }) {
     });
     localStorage.setItem('motofix_token', data.token);
     localStorage.setItem('motofix_user', JSON.stringify(data.user));
+    setToken(data.token);
     setUser(data.user);
     return data.user;
   };
@@ -26,6 +28,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('motofix_token');
     localStorage.removeItem('motofix_user');
+    setToken(null);
     setUser(null);
   };
 
@@ -38,9 +41,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, token: localStorage.getItem('motofix_token'), login, register, logout, updateUser }}
-    >
+    <AuthContext.Provider value={{ user, token, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

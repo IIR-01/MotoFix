@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ManageServices from './pages/ManageServices';
 import AdminDashboard from './pages/AdminDashboard';
+import PartsSearch from './pages/PartsSearch';
 import SelectVehicle from './pages/SelectVehicle';
 
 // Pass a role to restrict a route to a single role (e.g. role="admin").
@@ -41,6 +42,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute role="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parts"
+        element={
+          <ProtectedRoute>
+            <PartsSearch />
           </ProtectedRoute>
         }
       />
