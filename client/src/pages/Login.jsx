@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import RoutePanel from '../components/RoutePanel';
 
 export default function Login() {
   const { login } = useAuth();
@@ -22,33 +23,61 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-red-bg">
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-8 w-full max-w-sm flex flex-col gap-3">
-        <h1 className="text-xl font-medium text-dark-red mb-2">Log in to MotoFix</h1>
-        {error && <p className="text-sm text-primary-red">{error}</p>}
-        <input
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="border border-primary-red rounded px-3 py-2 text-sm"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="border border-primary-red rounded px-3 py-2 text-sm"
-          required
-        />
-        <button type="submit" className="bg-primary-red text-white py-2 rounded text-sm font-medium mt-2">
-          Log in
-        </button>
-        <Link to="/register" className="text-xs text-dark-red text-center underline">
-          Need an account? Register
-        </Link>
-      </form>
+    <div className="min-h-screen flex">
+      <RoutePanel />
+
+      <div className="flex-1 flex items-center justify-center px-6 py-16 bg-white">
+        <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-5">
+          <div className="mb-2">
+            <h1 className="font-display font-semibold text-3xl text-ink">Welcome back</h1>
+            <p className="text-gray-500 mt-2">Log in to manage your services and requests.</p>
+          </div>
+
+          {error && (
+            <p className="text-sm text-primary-red bg-light-red-bg border border-primary-red/30 rounded-md px-4 py-3">
+              {error}
+            </p>
+          )}
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-ink">Email</span>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base"
+              required
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-ink">Password</span>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base"
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="bg-primary-red hover:bg-dark-red transition-colors text-white py-3.5 rounded-md text-base font-medium mt-2"
+          >
+            Log in
+          </button>
+
+          <p className="text-sm text-gray-500 text-center mt-2">
+            Need an account?{' '}
+            <Link to="/register" className="text-primary-red font-medium">
+              Register
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

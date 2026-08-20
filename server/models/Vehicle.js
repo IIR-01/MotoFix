@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+// Shared reference data: powers the cascading make -> model -> year dropdowns
+// on the Compatible Parts Search feature (Module 1, Hafizur) as well as the
+// vehicle customization picker (Module 1, Shihab). Not every vehicle needs
+// every field — a parts-search-only entry can skip bodyType/baseImageUrl.
 const CUSTOMIZATION_CATEGORIES = ['paint_color', 'rims', 'spoiler', 'body_kit', 'brake_caliper', 'decals'];
 
 const vehicleSchema = new mongoose.Schema(
@@ -7,8 +11,8 @@ const vehicleSchema = new mongoose.Schema(
     make: { type: String, required: true, trim: true },
     model: { type: String, required: true, trim: true },
     year: { type: Number, required: true },
-    bodyType: { type: String, required: true },
-    baseImageUrl: { type: String, required: true },
+    bodyType: { type: String },
+    baseImageUrl: { type: String },
     customizationCategories: {
       type: [String],
       enum: CUSTOMIZATION_CATEGORIES,
