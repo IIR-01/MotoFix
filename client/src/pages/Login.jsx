@@ -14,9 +14,15 @@ export default function Login() {
     setError('');
     try {
       const user = await login(form.email, form.password);
-      if (user.role === 'vendor') navigate('/services');
-      else if (user.role === 'admin') navigate('/admin');
-      else navigate('/customize');
+      if (user.role === 'vendor') {
+        navigate(user.serviceCategory === 'mechanic_center' ? '/services' : '/inventory');
+      } else if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        // Customers land on "/", which renders the chooser (CustomerHome)
+        // rather than jumping straight into one specific feature.
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message);
     }

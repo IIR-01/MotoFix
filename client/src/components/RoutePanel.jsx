@@ -42,7 +42,7 @@ export default function RoutePanel() {
         </div>
       </div>
 
-      <p className="text-xs text-light-red-bg/70">MotoFix &mdash; built for CSE471, Group 10</p>
+      <p className="text-xs text-light-red-bg/70">MotoFix &mdash; A project for CSE471 of Section: 02 Group 10</p>
     </div>
   );
 }

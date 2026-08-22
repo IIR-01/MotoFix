@@ -6,9 +6,10 @@ import ManageServices from './pages/ManageServices';
 import AdminDashboard from './pages/AdminDashboard';
 import PartsSearch from './pages/PartsSearch';
 import SelectVehicle from './pages/SelectVehicle';
+import RequestRoadsideAssistance from './pages/RequestRoadsideAssistance';
+import CustomerHome from './pages/CustomerHome';
+import ComingSoon from './components/ComingSoon';
 
-// Pass a role to restrict a route to a single role (e.g. role="admin").
-// Omit it for any route that just needs "logged in, don't care which role".
 function ProtectedRoute({ children, role }) {
   const { user, token } = useAuth();
   if (!token) return <Navigate to="/login" replace />;
@@ -16,11 +17,16 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
+// Admins and vendors each have exactly one place to be, so they get sent
+// straight there. Customers have three genuinely different things they might
+// want, so "/" renders an actual chooser for them instead of picking one.
 function HomeRedirect() {
   const { user } = useAuth();
   if (user?.role === 'admin') return <Navigate to="/admin" replace />;
-  if (user?.role === 'vendor') return <Navigate to="/services" replace />;
-  if (user?.role === 'customer') return <Navigate to="/customize" replace />;
+  if (user?.role === 'vendor') {
+    return <Navigate to={user.serviceCategory === 'mechanic_center' ? '/services' : '/inventory'} replace />;
+  }
+  if (user?.role === 'customer') return <CustomerHome />;
   return <Navigate to="/login" replace />;
 }
 
@@ -34,6 +40,38 @@ function AppRoutes() {
         element={
           <ProtectedRoute role="vendor">
             <ManageServices />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute role="vendor">
+            <ComingSoon
+              active="My Inventory"
+              title="Parts inventory management is on its way"
+              description="Listing and managing your parts catalog is being built as part of Hafizur's features. Check back soon."
+            />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/requests"
+        element={
+          <ProtectedRoute role="vendor">
+            <ComingSoon
+              active="Requests"
+              title="Roadside request dashboard is on its way"
+              description="Incoming roadside assistance requests will show up here once your Vendor Request Dashboard feature is built."
+            />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roadside-request"
+        element={
+          <ProtectedRoute role="customer">
+            <RequestRoadsideAssistance />
           </ProtectedRoute>
         }
       />
@@ -61,8 +99,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Module 2 (Roadside Assistance Request) and Module 3 features
-          get their own routes here as they're built. */}
       <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
