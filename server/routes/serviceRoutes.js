@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { protect, requireRole } = require('../middleware/authMiddleware');
+const { protect, requireRole, requireServiceCategory } = require('../middleware/authMiddleware');
 const {
   createService, getMyServices, updateService, deleteService,
 } = require('../controllers/serviceController');
 
-router.use(protect, requireRole('vendor'));
+router.use(protect, requireRole('vendor'), requireServiceCategory('mechanic_center'));
 router.post('/', createService);
 router.get('/mine', getMyServices);
 router.put('/:id', updateService);

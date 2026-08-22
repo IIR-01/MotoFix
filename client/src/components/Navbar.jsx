@@ -1,23 +1,36 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const LINKS_BY_ROLE = {
-  vendor: [
-    { label: 'Dashboard', path: '/' },
-    { label: 'My Services', path: '/services' },
-    { label: 'Requests', path: '/requests' },
-  ],
-  admin: [{ label: 'Pending Vendors', path: '/admin' }],
-  customer: [
-    { label: 'Customize', path: '/customize' },
-    { label: 'Find Parts', path: '/parts' },
-  ],
-};
+function getLinks(user) {
+  if (!user) return [];
+  if (user.role === 'admin') return [{ label: 'Pending Vendors', path: '/admin' }];
+  if (user.role === 'customer') {
+    return [
+      { label: 'Home', path: '/' },
+      { label: 'Customize', path: '/customize' },
+      { label: 'Find Parts', path: '/parts' },
+      { label: 'Roadside Help', path: '/roadside-request' },
+    ];
+  }
+  if (user.role === 'vendor') {
+    return user.serviceCategory === 'mechanic_center'
+      ? [
+          { label: 'Dashboard', path: '/' },
+          { label: 'My Services', path: '/services' },
+          { label: 'Requests', path: '/requests' },
+        ]
+      : [
+          { label: 'Dashboard', path: '/' },
+          { label: 'My Inventory', path: '/inventory' },
+        ];
+  }
+  return [];
+}
 
 export default function Navbar({ active }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const links = LINKS_BY_ROLE[user?.role] || [];
+  const links = getLinks(user);
 
   const handleLogout = () => {
     logout();
