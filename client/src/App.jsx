@@ -6,6 +6,7 @@ import ManageServices from './pages/ManageServices';
 import AdminDashboard from './pages/AdminDashboard';
 import PartsSearch from './pages/PartsSearch';
 import SelectVehicle from './pages/SelectVehicle';
+import Customize from './pages/Customize';
 
 // Pass a role to restrict a route to a single role (e.g. role="admin").
 // Omit it for any route that just needs "logged in, don't care which role".
@@ -61,8 +62,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Module 2 (Roadside Assistance Request) and Module 3 features
-          get their own routes here as they're built. */}
+      <Route
+        path="/customize/build"
+        element={
+          <ProtectedRoute role="customer">
+            <Customize />
+          </ProtectedRoute>
+        }
+      />
+      {/* Module 3 features (Save & Share Custom Build, Roadside Assistance
+          Request) get their own routes here as they're built. */}
       <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
