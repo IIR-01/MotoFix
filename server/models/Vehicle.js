@@ -18,6 +18,24 @@ const vehicleSchema = new mongoose.Schema(
       enum: CUSTOMIZATION_CATEGORIES,
       default: [],
     },
+    // Real photos of this exact vehicle for specific option picks, keyed by
+    // category — e.g. { paint_color: [{key:'red', label:'Red', imageUrl}],
+    // decals: [{key:'tribal', label:'Tribal Graphics', imageUrl}] }. Only
+    // populated where a real photo actually exists; baseImageUrl is always
+    // the implicit "stock/no change" option for every category.
+    photoOptions: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    // Full replacement of a category's option list for this vehicle, keyed
+    // by category — e.g. { rims: [{key:'black_and_white', label:'Black and
+    // White', imageUrl}] } shows ONLY that option instead of the shared
+    // bodyType option set (unlike photoOptions, which layers photos onto
+    // the existing shared list without removing anything).
+    optionOverrides: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   { timestamps: true }
 );
