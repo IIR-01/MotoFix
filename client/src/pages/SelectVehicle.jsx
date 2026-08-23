@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CustomizerSidebar from '../components/CustomizerSidebar';
 import { CATEGORY_META } from '../constants/customizationCategories';
 import { apiFetch } from '../api/client';
@@ -45,6 +46,7 @@ function VehicleDropdown({ label, value, options, onChange, placeholder, disable
 }
 
 export default function SelectVehicle() {
+  const navigate = useNavigate();
   const [options, setOptions] = useState([]);
   const [selection, setSelection] = useState(EMPTY_SELECTION);
   const [vehicle, setVehicle] = useState(null);
@@ -230,6 +232,20 @@ export default function SelectVehicle() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const params = new URLSearchParams(selection).toString();
+                    navigate(`/customize/build?${params}`);
+                  }}
+                  className="bg-primary-red text-white px-5 h-[46px] rounded-lg text-sm font-medium shadow-sm hover:bg-dark-red transition-colors flex items-center gap-2"
+                >
+                  Continue to Customize
+                  <span aria-hidden>&rarr;</span>
+                </button>
               </div>
             </>
           )}
