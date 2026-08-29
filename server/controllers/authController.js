@@ -14,7 +14,7 @@ exports.register = async (req, res) => {
   try {
     const {
       name, email, phone, password, role,
-      businessName, address, serviceCategory, tradeLicense,
+      businessName, address, serviceCategory, tradeLicense, location,
     } = req.body;
 
     const ALLOWED_ROLES = ['customer', 'vendor'];
@@ -24,7 +24,15 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
+    if (
+      safeRole === 'vendor' && serviceCategory === 'mechanic_center' &&
+      (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number')
+    ) {
+      return res.status(400).json({ message: 'Shop location is required for mechanic centers' });
+    }
+
     const existing = await User.findOne({ email });
+
     if (existing) {
       return res.status(400).json({ message: 'An account with this email already exists' });
     }
@@ -35,6 +43,11 @@ exports.register = async (req, res) => {
     if (safeRole === 'vendor') {
       Object.assign(userData, { businessName, address, serviceCategory, tradeLicense });
       // verificationStatus defaults to 'pending' from the schema
+      if (serviceCategory === 'mechanic_center') {
+        // GeoJSON requires [lng, lat] order — this is the one place that
+        // conversion happens, so nothing downstream has to think about it.
+        userData.location = { type: 'Point', coordinates: [location.lng, location.lat] };
+      }
     }
 
     const user = await User.create(userData);
