@@ -9,6 +9,7 @@ import SelectVehicle from './pages/SelectVehicle';
 import RequestRoadsideAssistance from './pages/RequestRoadsideAssistance';
 import CustomerHome from './pages/CustomerHome';
 import ComingSoon from './components/ComingSoon';
+import Customize from './pages/Customize';
 
 function ProtectedRoute({ children, role }) {
   const { user, token } = useAuth();
@@ -99,6 +100,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/customize/build"
+        element={
+          <ProtectedRoute role="customer">
+            <Customize />
+          </ProtectedRoute>
+        }
+      />
+      {/* Module 3 features (Save & Share Custom Build) get their own
+          routes here as they're built. */}
       <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
