@@ -10,6 +10,9 @@ import RequestRoadsideAssistance from './pages/RequestRoadsideAssistance';
 import CustomerHome from './pages/CustomerHome';
 import ComingSoon from './components/ComingSoon';
 import Customize from './pages/Customize';
+import Review from './pages/Review';
+import MyGarage from './pages/MyGarage';
+import SharedBuild from './pages/SharedBuild';
 
 function ProtectedRoute({ children, role }) {
   const { user, token } = useAuth();
@@ -108,8 +111,24 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Module 3 features (Save & Share Custom Build) get their own
-          routes here as they're built. */}
+      <Route
+        path="/customize/review"
+        element={
+          <ProtectedRoute role="customer">
+            <Review />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/garage"
+        element={
+          <ProtectedRoute role="customer">
+            <MyGarage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Public — anyone with the link can view (not edit) a shared build. */}
+      <Route path="/shared/:token" element={<SharedBuild />} />
       <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
