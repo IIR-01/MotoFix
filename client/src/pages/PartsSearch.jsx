@@ -88,7 +88,7 @@ export default function PartsSearch() {
     <div>
       <Navbar active="Find Parts" />
       <div className="max-w-6xl mx-auto px-6 py-6">
-        <h1 className="text-2xl font-medium text-dark-red">Find compatible parts</h1>
+        <h1 className="font-display font-semibold text-3xl text-dark-red">Find compatible parts</h1>
         <p className="text-sm text-gray-500 mt-1 mb-5">
           Select your vehicle's make, model, and year to see matching parts.
         </p>

@@ -53,11 +53,11 @@ export default function PartCard({ part }) {
           {part.category}
           {part.brand ? ` · ${part.brand}` : ''}
         </span>
-        <p className="font-medium text-dark-red text-sm leading-snug">{part.name}</p>
-        <p className="text-xs text-gray-500">{part.vendorName}</p>
+        <p className="font-semibold text-dark-red text-base leading-snug">{part.name}</p>
+        <p className="text-sm text-gray-500">{part.vendorName}</p>
         <div className="flex items-center justify-between mt-auto pt-2">
-          <p className="font-medium text-primary-red text-base">{`৳${part.price}`}</p>
-          {!outOfStock && <p className="text-xs text-gray-500">{part.stock} in stock</p>}
+          <p className="font-display font-semibold text-primary-red text-lg">{`৳${part.price}`}</p>
+          {!outOfStock && <p className="text-sm text-gray-500">{part.stock} in stock</p>}
         </div>
       </div>
     </div>
