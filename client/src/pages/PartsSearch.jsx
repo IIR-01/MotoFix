@@ -95,11 +95,11 @@ export default function PartsSearch() {
 
         {error && <p className="text-sm text-primary-red mb-4">{error}</p>}
 
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6">
           <select
             value={make}
             onChange={(e) => setMake(e.target.value)}
-            className="border border-primary-red rounded px-3 py-2 text-sm"
+            className="border border-primary-red rounded-md px-4 py-3 text-base min-w-[160px]"
           >
             <option value="">Make</option>
             {makes.map((m) => (
@@ -113,7 +113,7 @@ export default function PartsSearch() {
             value={model}
             onChange={(e) => setModel(e.target.value)}
             disabled={!make}
-            className="border border-primary-red rounded px-3 py-2 text-sm disabled:opacity-50"
+            className="border border-primary-red rounded-md px-4 py-3 text-base min-w-[160px] disabled:opacity-50"
           >
             <option value="">Model</option>
             {models.map((m) => (
@@ -127,7 +127,7 @@ export default function PartsSearch() {
             value={year}
             onChange={(e) => setYear(e.target.value)}
             disabled={!model}
-            className="border border-primary-red rounded px-3 py-2 text-sm disabled:opacity-50"
+            className="border border-primary-red rounded-md px-4 py-3 text-base min-w-[160px] disabled:opacity-50"
           >
             <option value="">Year</option>
             {years.map((y) => (
@@ -139,13 +139,13 @@ export default function PartsSearch() {
         </div>
 
         {parts && parts.length > 0 && (
-          <div className="flex flex-wrap items-end gap-3 mb-6 pb-5 border-b border-gray-200">
-            <label className="flex flex-col gap-1 text-xs text-gray-500">
+          <div className="flex flex-wrap items-end gap-4 mb-6 pb-5 border-b border-gray-200">
+            <label className="flex flex-col gap-1.5 text-sm text-gray-500">
               Category
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="border border-primary-red rounded px-3 py-2 text-sm"
+                className="border border-primary-red rounded-md px-4 py-3 text-base min-w-[170px]"
               >
                 <option value="">All categories</option>
                 {Object.entries(PART_CATEGORY_LABELS).map(([value, label]) => (
@@ -156,12 +156,12 @@ export default function PartsSearch() {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-gray-500">
+            <label className="flex flex-col gap-1.5 text-sm text-gray-500">
               Brand
               <select
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                className="border border-primary-red rounded px-3 py-2 text-sm"
+                className="border border-primary-red rounded-md px-4 py-3 text-base min-w-[170px]"
               >
                 <option value="">All brands</option>
                 {brands.map((b) => (
@@ -172,7 +172,7 @@ export default function PartsSearch() {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-gray-500">
+            <label className="flex flex-col gap-1.5 text-sm text-gray-500">
               Min price
               <input
                 type="number"
@@ -180,11 +180,11 @@ export default function PartsSearch() {
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
                 placeholder="৳0"
-                className="border border-primary-red rounded px-3 py-2 text-sm w-24"
+                className="border border-primary-red rounded-md px-4 py-3 text-base w-32"
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-xs text-gray-500">
+            <label className="flex flex-col gap-1.5 text-sm text-gray-500">
               Max price
               <input
                 type="number"
@@ -192,7 +192,7 @@ export default function PartsSearch() {
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
                 placeholder="Any"
-                className="border border-primary-red rounded px-3 py-2 text-sm w-24"
+                className="border border-primary-red rounded-md px-4 py-3 text-base w-32"
               />
             </label>
 
@@ -204,7 +204,7 @@ export default function PartsSearch() {
                   setMinPrice('');
                   setMaxPrice('');
                 }}
-                className="text-sm text-primary-red underline pb-2"
+                className="text-sm text-primary-red underline pb-3"
               >
                 Clear filters
               </button>
