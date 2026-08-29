@@ -20,6 +20,7 @@ app.use('/api/parts', require('./routes/partRoutes'));
 app.use('/api/customization', require('./routes/customizationRoutes'));
 app.use('/api/requests', require('./routes/requestRoutes'));
 app.use('/api/builds', require('./routes/customBuildRoutes'));
+app.use('/api/vendor/requests', require('./routes/vendorRequestRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

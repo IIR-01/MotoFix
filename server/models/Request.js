@@ -20,6 +20,15 @@ const requestSchema = new mongoose.Schema(
       enum: ['Pending', 'Accepted', 'En Route', 'Completed', 'Cancelled'],
       default: 'Pending',
     },
+
+    // Set once the customer picks a mechanic from the ranked candidate
+    // list. Reset to null if that mechanic rejects, so the customer can
+    // pick someone else without the request being stuck.
+    targetVendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+
+    // Only settable once, only after status is 'Completed'.
+    rating: { type: Number, min: 1, max: 5, default: null },
+    review: { type: String, default: '' },
   },
   { timestamps: true }
 );

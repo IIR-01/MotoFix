@@ -10,6 +10,8 @@ import RequestRoadsideAssistance from './pages/RequestRoadsideAssistance';
 import CustomerHome from './pages/CustomerHome';
 import ComingSoon from './components/ComingSoon';
 import Customize from './pages/Customize';
+import NearbyMechanics from './pages/NearbyMechanics';
+import VendorRequestDashboard from './pages/VendorRequestDashboard';
 import Review from './pages/Review';
 import MyGarage from './pages/MyGarage';
 import SharedBuild from './pages/SharedBuild';
@@ -63,11 +65,7 @@ function AppRoutes() {
         path="/requests"
         element={
           <ProtectedRoute role="vendor">
-            <ComingSoon
-              active="Requests"
-              title="Roadside request dashboard is on its way"
-              description="Incoming roadside assistance requests will show up here once your Vendor Request Dashboard feature is built."
-            />
+            <VendorRequestDashboard />
           </ProtectedRoute>
         }
       />
@@ -76,6 +74,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute role="customer">
             <RequestRoadsideAssistance />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roadside-request/:requestId/mechanics"
+        element={
+          <ProtectedRoute role="customer">
+            <NearbyMechanics />
           </ProtectedRoute>
         }
       />
