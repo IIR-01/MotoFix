@@ -8,6 +8,7 @@ function getLinks(user) {
     return [
       { label: 'Home', path: '/' },
       { label: 'Customize', path: '/customize' },
+      { label: 'My Garage', path: '/garage' },
       { label: 'Find Parts', path: '/parts' },
       { label: 'Roadside Help', path: '/roadside-request' },
     ];

@@ -6,17 +6,19 @@ const STEPS = [
     key: 'select-vehicle',
     label: 'Select Vehicle',
     description: 'Choose your make, model and year',
-    path: '/customize',
+    path: () => '/customize',
   },
   {
     key: 'customize',
     label: 'Customize',
     description: 'Personalize your vehicle with available options',
+    path: (qs) => qs && `/customize/build?${qs}`,
   },
   {
     key: 'review',
     label: 'Review',
     description: 'Review your build and save or share',
+    path: (qs) => qs && `/customize/review?${qs}`,
   },
 ];
 
@@ -39,7 +41,7 @@ function LogoutIcon(props) {
   );
 }
 
-export default function CustomizerSidebar({ activeStep }) {
+export default function CustomizerSidebar({ activeStep, queryString }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -63,13 +65,14 @@ export default function CustomizerSidebar({ activeStep }) {
           {STEPS.map((step, index) => {
             const isActive = step.key === activeStep;
             const isLast = index === STEPS.length - 1;
+            const path = step.path(queryString);
             const label = (
               <div className={(isLast ? '' : 'pb-8') + ' rounded-lg px-2 py-1.5 -mx-2 ' + (isActive ? 'bg-light-red-bg' : '')}>
                 <p
                   className={
                     isActive
                       ? 'text-sm font-semibold text-primary-red'
-                      : step.path
+                      : path
                         ? 'text-sm font-medium text-gray-700 group-hover:text-primary-red transition-colors'
                         : 'text-sm font-medium text-gray-400'
                   }
@@ -94,8 +97,8 @@ export default function CustomizerSidebar({ activeStep }) {
                   </span>
                   {!isLast && <span className="w-px flex-1 bg-gray-200 mt-1" />}
                 </div>
-                {step.path ? (
-                  <Link to={step.path} className="group flex-1">
+                {path ? (
+                  <Link to={path} className="group flex-1">
                     {label}
                   </Link>
                 ) : (
