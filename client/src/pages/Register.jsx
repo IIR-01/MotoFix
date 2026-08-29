@@ -17,12 +17,32 @@ export default function Register() {
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [location, setLocation] = useState(null);
+  const [locationError, setLocationError] = useState('');
+
+  const captureLocation = () => {
+    setLocationError('');
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      () => setLocationError('Could not get your location. Please allow location access and try again.')
+    );
+  };
+
+  const needsLocation = role === 'vendor' && form.serviceCategory === 'mechanic_center';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (needsLocation && !location) {
+      setError('Share your shop location before registering — customers need it to find you.');
+      return;
+    }
     try {
-      const res = await register({ ...form, role });
+      const res = await register({ ...form, role, ...(needsLocation && { location }) });
       setMessage(res.message);
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
@@ -122,6 +142,27 @@ export default function Register() {
                     className={inputClass} required />
                 </label>
               </div>
+
+              {needsLocation && (
+                <div className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 text-center">
+                  <span className="w-3 h-3 bg-primary-red rounded-full" />
+                  {location ? (
+                    <p className="text-sm font-medium text-dark-red">
+                      Shop location shared — {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500">
+                        Customers find nearby mechanics by shop location — share yours to appear in search.
+                      </p>
+                      <button type="button" onClick={captureLocation} className="text-sm text-primary-red font-medium underline">
+                        Share my location
+                      </button>
+                    </>
+                  )}
+                  {locationError && <p className="text-sm text-primary-red">{locationError}</p>}
+                </div>
+              )}
             </div>
           )}
 

@@ -16,14 +16,10 @@ function getLinks(user) {
   if (user.role === 'vendor') {
     return user.serviceCategory === 'mechanic_center'
       ? [
-          { label: 'Dashboard', path: '/' },
           { label: 'My Services', path: '/services' },
           { label: 'Requests', path: '/requests' },
         ]
-      : [
-          { label: 'Dashboard', path: '/' },
-          { label: 'My Inventory', path: '/inventory' },
-        ];
+      : [{ label: 'My Inventory', path: '/inventory' }];
   }
   return [];
 }
