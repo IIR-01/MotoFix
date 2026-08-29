@@ -28,8 +28,23 @@ const userSchema = new mongoose.Schema(
       enum: ['Available', 'Busy', 'Offline'],
       default: 'Offline',
     },
+
+    // Mechanic-vendor-only: shop location, captured via browser geolocation
+    // at registration. Stored as GeoJSON (note: [lng, lat] order, not
+    // [lat, lng] — MongoDB requirement) so a 2dsphere index can be queried.
+    // Optional at the schema level so parts-store vendors and any
+    // already-existing accounts don't break.
+    location: {
+      type: { type: String, enum: ['Point'] },
+      coordinates: { type: [Number] },
+    },
+
+    // Running total, not a stored average, so the average never drifts
+    // from float rounding.
+    ratingSum: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.index({ location: '2dsphere' });
