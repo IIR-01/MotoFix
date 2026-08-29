@@ -35,7 +35,10 @@ const run = async () => {
     {
       name: 'Front Brake Pad Set',
       category: 'brakes',
+      brand: 'EBC',
       price: 850,
+      stock: 14,
+      vendorName: 'Dhaka Moto Spares',
       imageUrl: '/images/parts/cbr150r_front_brake_pad.jpg',
       compatibleVehicles: [
         key('Honda', 'CBR150R', 2020),
@@ -45,7 +48,10 @@ const run = async () => {
     {
       name: 'Headlight Set',
       category: 'electrical',
+      brand: 'Bosch',
       price: 33850,
+      stock: 6,
+      vendorName: 'City Auto Parts',
       imageUrl: '/images/parts/headlight_honda city.jpg',
       compatibleVehicles: [
         key('Honda', 'CITY', 2020),
@@ -55,17 +61,23 @@ const run = async () => {
     {
       name: 'CarbonFiber_HOOD',
       category: 'body',
+      brand: 'Seibon',
       price: 111999,
+      stock: 0, // out of stock — exercises the "Out of Stock" label
+      vendorName: 'Lancer Performance Parts',
       imageUrl: '/images/parts/mitsubishi_lancher_2017_carbonfiberhood.webp',
       compatibleVehicles: [
         key('Mitsubisi', 'LANCHER', 2017),
-        
+
       ],
     },
     {
       name: 'Chain & Sprocket Kit',
       category: 'drivetrain',
+      brand: 'DID',
       price: 2400,
+      stock: 20,
+      vendorName: 'Dhaka Moto Spares',
       imageUrl: '/images/parts/cbr_chain_sprocket.jpeg',
       compatibleVehicles: [
         key('Honda', 'CBR150R', 2020),
@@ -76,8 +88,11 @@ const run = async () => {
     {
       name: 'Air Filter',
       category: 'engine',
+      brand: 'K&N',
       price: 450,
-      imageUrl: '/images/parts/v3_airfilter.jpg', 
+      stock: 35,
+      vendorName: 'RideWell Accessories',
+      imageUrl: '/images/parts/v3_airfilter.jpg',
       compatibleVehicles: [
         key('Yamaha', 'R15 V3', 2020),
         key('Yamaha', 'R15 V3', 2022),
@@ -86,21 +101,30 @@ const run = async () => {
     {
       name: 'Rear Shock Absorber',
       category: 'suspension',
+      brand: 'YSS',
       price: 3200,
+      stock: 0, // out of stock — exercises the "Out of Stock" label
+      vendorName: 'RideWell Accessories',
       imageUrl: '/images/parts/yamaha-r15-v3-shock-absorber.jpeg', // no photo yet
       compatibleVehicles: [key('Yamaha', 'R15 V3', 2022)],
     },
     {
       name: 'Clutch Plate Set',
       category: 'drivetrain',
+      brand: 'EBC',
       price: 1600,
+      stock: 8,
+      vendorName: 'Yamaha Genuine Parts BD',
       imageUrl: '', // no photo yet
       compatibleVehicles: [key('Yamaha', 'FZS FI', 2021)],
     },
     {
       name: 'Headlight Assembly',
       category: 'electrical',
+      brand: 'Denso',
       price: 2100,
+      stock: 5,
+      vendorName: 'City Auto Parts',
       imageUrl: '/images/parts/gixxer_headlight.jpg',
       compatibleVehicles: [key('Suzuki', 'Gixxer SF', 2021)],
     },
