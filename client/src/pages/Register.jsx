@@ -12,36 +12,59 @@ const DEFAULT_FORM = {
   businessName: '', address: '', serviceCategory: 'mechanic_center', tradeLicense: '',
 };
 
-// A vendor's form is kept here across the trip to the payment gateway
-// (see AuthContext.register) so a failed listing-fee payment doesn't force
-// them to retype everything to retry.
+// A vendor's form (and captured shop location, for mechanic centers) is
+// kept here across the trip to the payment gateway (see AuthContext
+// .register) so a failed listing-fee payment doesn't force them to redo
+// everything to retry.
 const PENDING_FORM_KEY = 'motofix_pending_vendor_form';
+
+const readPendingVendor = () => {
+  try {
+    const stored = sessionStorage.getItem(PENDING_FORM_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [role, setRole] = useState(() => (sessionStorage.getItem(PENDING_FORM_KEY) ? 'vendor' : 'customer'));
-  const [form, setForm] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem(PENDING_FORM_KEY);
-      return stored ? JSON.parse(stored) : DEFAULT_FORM;
-    } catch {
-      return DEFAULT_FORM;
-    }
-  });
+  const routerLocation = useLocation();
+  const [role, setRole] = useState(() => (readPendingVendor() ? 'vendor' : 'customer'));
+  const [form, setForm] = useState(() => readPendingVendor()?.form || DEFAULT_FORM);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState(location.state?.paymentError || '');
+  const [error, setError] = useState(routerLocation.state?.paymentError || '');
+  const [location, setLocation] = useState(() => readPendingVendor()?.location || null);
+  const [locationError, setLocationError] = useState('');
+
+  const captureLocation = () => {
+    setLocationError('');
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      () => setLocationError('Could not get your location. Please allow location access and try again.')
+    );
+  };
+
+  const needsLocation = role === 'vendor' && form.serviceCategory === 'mechanic_center';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (needsLocation && !location) {
+      setError('Share your shop location before registering — customers need it to find you.');
+      return;
+    }
     try {
-      const res = await register({ ...form, role });
+      const res = await register({ ...form, role, ...(needsLocation && { location }) });
       if (res.gatewayUrl) {
         // Vendor path: account isn't created yet — it's created once the
         // listing fee payment on the gateway page succeeds.
-        sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify(form));
+        sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location }));
         navigate(`/payment/gateway/${res.tranId}`);
         return;
       }
@@ -145,6 +168,27 @@ export default function Register() {
                     className={inputClass} required />
                 </label>
               </div>
+
+              {needsLocation && (
+                <div className="bg-gray-100 rounded-lg p-4 flex flex-col items-center gap-2 text-center">
+                  <span className="w-3 h-3 bg-primary-red rounded-full" />
+                  {location ? (
+                    <p className="text-sm font-medium text-dark-red">
+                      Shop location shared — {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500">
+                        Customers find nearby mechanics by shop location — share yours to appear in search.
+                      </p>
+                      <button type="button" onClick={captureLocation} className="text-sm text-primary-red font-medium underline">
+                        Share my location
+                      </button>
+                    </>
+                  )}
+                  {locationError && <p className="text-sm text-primary-red">{locationError}</p>}
+                </div>
+              )}
             </div>
           )}
 

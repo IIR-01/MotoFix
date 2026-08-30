@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import CustomizerSidebar from '../components/CustomizerSidebar';
+import SaveBuildModal from '../components/SaveBuildModal';
+import AiAdvisorModal from '../components/AiAdvisorModal';
 import { CATEGORY_META } from '../constants/customizationCategories';
+import { useOptionsByCategory } from '../hooks/useOptionsByCategory';
+import { saveDraft, loadDraft } from '../utils/customBuildDraft';
 import { apiFetch } from '../api/client';
 
 function ChevronIcon(props) {
@@ -16,6 +20,14 @@ function CheckIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function SparkleIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />
     </svg>
   );
 }
@@ -103,11 +115,12 @@ function CategorySection({ category, options, selected, onSelect, isOpen, onTogg
 }
 
 export default function Customize() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const make = searchParams.get('make');
   const model = searchParams.get('model');
   const year = searchParams.get('year');
+  const buildIdParam = searchParams.get('buildId');
 
   const [vehicle, setVehicle] = useState(null);
   const [allOptions, setAllOptions] = useState([]);
@@ -115,6 +128,21 @@ export default function Customize() {
   const [openCategory, setOpenCategory] = useState(null);
   const [activePhotoUrl, setActivePhotoUrl] = useState(null);
   const [error, setError] = useState('');
+
+  const [buildId, setBuildId] = useState(buildIdParam);
+  const [savedBuild, setSavedBuild] = useState(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [savingBuild, setSavingBuild] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [shareUrl, setShareUrl] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const seededRef = useRef(false);
+
+  const queryString = useMemo(
+    () => (make && model && year ? new URLSearchParams({ make, model, year, ...(buildId && { buildId }) }).toString() : ''),
+    [make, model, year, buildId]
+  );
 
   useEffect(() => {
     if (!make || !model || !year) {
@@ -124,74 +152,68 @@ export default function Customize() {
     setError('');
     const params = new URLSearchParams({ make, model, year }).toString();
     apiFetch(`/customization/vehicles/lookup?${params}`)
-      .then((v) => {
-        setVehicle(v);
-        setActivePhotoUrl(v.baseImageUrl);
-      })
+      .then((v) => setVehicle(v))
       .catch((err) => setError(err.message));
   }, [make, model, year, navigate]);
 
   useEffect(() => {
     if (!vehicle) return;
     apiFetch(`/customization/options?bodyType=${encodeURIComponent(vehicle.bodyType)}`)
-      .then((opts) => {
-        setAllOptions(opts);
-        setOpenCategory(vehicle.customizationCategories[0] || null);
-      })
+      .then(setAllOptions)
       .catch((err) => setError(err.message));
   }, [vehicle]);
 
-  const optionsByCategory = useMemo(() => {
-    if (!vehicle) return {};
-    const map = { paint_color: [] };
-    allOptions.forEach((o) => {
-      if (!map[o.category]) map[o.category] = [];
-      map[o.category].push(o);
-    });
-
-    // paint_color has no generic bodyType data — it's always the vehicle's
-    // own real photos, with the base photo as the implicit "stock" choice.
-    map.paint_color = [
-      { key: 'stock', label: 'Stock', imageUrl: vehicle.baseImageUrl },
-      ...(vehicle.photoOptions?.paint_color || []),
-    ];
-
-    // For any other category where this vehicle has real photos for some of
-    // its options, attach them — any option without a matching real photo
-    // falls back to the base ("no change") photo instead.
-    Object.entries(vehicle.photoOptions || {}).forEach(([category, photos]) => {
-      if (category === 'paint_color' || !map[category]) return;
-      map[category] = map[category].map((opt) => ({
-        ...opt,
-        imageUrl: photos.find((p) => p.key === opt.key)?.imageUrl || vehicle.baseImageUrl,
-      }));
-    });
-
-    // Full override: replaces a category's option list entirely (e.g. only
-    // "Black and White" rims instead of the shared stock/sport/alloy set),
-    // instead of layering onto it.
-    Object.entries(vehicle.optionOverrides || {}).forEach(([category, options]) => {
-      map[category] = options;
-    });
-
-    return map;
-  }, [allOptions, vehicle]);
-
+  // If this session is editing an already-saved build, load it so its
+  // selections (and share link, if any) take priority over a fresh default.
   useEffect(() => {
-    if (!vehicle || Object.keys(optionsByCategory).length === 0) return;
+    if (!buildIdParam) return;
+    apiFetch(`/builds/${buildIdParam}`)
+      .then(setSavedBuild)
+      .catch((err) => setError(err.message));
+  }, [buildIdParam]);
+
+  const optionsByCategory = useOptionsByCategory(vehicle, allOptions);
+
+  // Seeds the selection exactly once: from the saved build being edited, or
+  // else from an in-progress draft left behind by a trip to the Review page,
+  // filling in defaults for anything neither of those covers.
+  useEffect(() => {
+    if (!vehicle || Object.keys(optionsByCategory).length === 0 || seededRef.current) return;
+    if (buildIdParam && !savedBuild) return; // wait for the saved build to finish loading
+
+    const draft = !savedBuild ? loadDraft(make, model, year) : null;
+    const seedMap = savedBuild
+      ? Object.fromEntries(savedBuild.selection.map((s) => [s.category, s.key]))
+      : draft?.selection || {};
+
     setSelection((prev) => {
-      const next = { ...prev };
+      const next = { ...prev, ...seedMap };
       vehicle.customizationCategories.forEach((cat) => {
         if (!next[cat] && optionsByCategory[cat]?.[0]) next[cat] = optionsByCategory[cat][0].key;
       });
       return next;
     });
-  }, [vehicle, optionsByCategory]);
+
+    setActivePhotoUrl(savedBuild?.previewImageUrl || draft?.activePhotoUrl || vehicle.baseImageUrl);
+    setOpenCategory(vehicle.customizationCategories[0] || null);
+    seededRef.current = true;
+  }, [vehicle, optionsByCategory, savedBuild, buildIdParam, make, model, year]);
+
+  // Keeps an in-progress draft in sessionStorage so the Review page (and a
+  // return trip back here) can see the latest selection without a save.
+  useEffect(() => {
+    if (!seededRef.current) return;
+    saveDraft(make, model, year, { selection, activePhotoUrl, buildId });
+  }, [selection, activePhotoUrl, buildId, make, model, year]);
 
   const handleSelect = (category, key) => {
     setSelection((prev) => ({ ...prev, [category]: key }));
     const opt = optionsByCategory[category]?.find((o) => o.key === key);
     if (opt?.imageUrl) setActivePhotoUrl(opt.imageUrl);
+  };
+
+  const handleApplyRecommendations = (recommendations) => {
+    recommendations.forEach((rec) => handleSelect(rec.category, rec.key));
   };
 
   const handleReset = () => {
@@ -203,11 +225,63 @@ export default function Customize() {
     setActivePhotoUrl(vehicle.baseImageUrl);
   };
 
+  const handleSaveBuild = async (name) => {
+    setSavingBuild(true);
+    setSaveError('');
+    try {
+      const payload = {
+        name,
+        vehicle: {
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          bodyType: vehicle.bodyType,
+          baseImageUrl: vehicle.baseImageUrl,
+        },
+        selection: Object.entries(selection).map(([category, key]) => ({
+          category,
+          key,
+          label: optionsByCategory[category]?.find((o) => o.key === key)?.label || key,
+        })),
+        previewImageUrl: activePhotoUrl,
+      };
+      const saved = buildId
+        ? await apiFetch(`/builds/${buildId}`, { method: 'PUT', body: JSON.stringify(payload) })
+        : await apiFetch('/builds', { method: 'POST', body: JSON.stringify(payload) });
+
+      setSavedBuild(saved);
+      if (!buildId) {
+        setBuildId(saved._id);
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set('buildId', saved._id);
+            return next;
+          },
+          { replace: true }
+        );
+      }
+      setShareUrl(`${window.location.origin}/shared/${saved.shareToken}`);
+      setShowSaveModal(false);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSavingBuild(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (error) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <div className="flex flex-1 flex-col md:flex-row">
-          <CustomizerSidebar activeStep="customize" />
+          <CustomizerSidebar activeStep="customize" queryString={queryString} />
           <main className="flex-1 flex items-center justify-center p-8">
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
               {error}
@@ -222,7 +296,7 @@ export default function Customize() {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <div className="flex flex-1 flex-col md:flex-row">
-          <CustomizerSidebar activeStep="customize" />
+          <CustomizerSidebar activeStep="customize" queryString={queryString} />
           <main className="flex-1 flex items-center justify-center p-8">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <span className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 border-t-primary-red animate-spin" />
@@ -250,20 +324,33 @@ export default function Customize() {
           </Link>
         </div>
         <div className="sm:ml-auto flex items-center gap-3">
-          <button type="button" disabled className="text-xs text-gray-300 cursor-not-allowed flex items-center gap-1.5">
-            Save
+          {shareUrl && (
+            <button type="button" onClick={handleCopyLink} className="text-xs text-gray-500 hover:text-primary-red transition-colors">
+              {copied ? 'Link copied!' : 'Copy share link'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowSaveModal(true)}
+            className="text-xs text-primary-red hover:text-dark-red font-medium flex items-center gap-1.5"
+          >
+            {savedBuild ? 'Update Save' : 'Save'}
           </button>
-          <button type="button" disabled className="bg-gray-100 text-gray-300 cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium">
+          <button
+            type="button"
+            onClick={() => navigate(`/customize/review?${queryString}`)}
+            className="bg-primary-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-dark-red transition-colors"
+          >
             View Summary
           </button>
         </div>
       </header>
 
       <div className="flex flex-1 flex-col md:flex-row">
-        <CustomizerSidebar activeStep="customize" />
+        <CustomizerSidebar activeStep="customize" queryString={queryString} />
 
         <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-8 py-8">
-          <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
                 <span className="text-primary-red">Visual</span> Customizer
@@ -272,13 +359,22 @@ export default function Customize() {
                 Options with a real photo update the picture below; others are saved as part of your build.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="border border-primary-red text-primary-red text-sm font-medium px-4 py-2 rounded-lg hover:bg-light-red-bg transition-colors shrink-0"
-            >
-              Reset All
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowAiModal(true)}
+                className="bg-white border border-primary-red text-primary-red text-sm font-medium px-4 py-2 rounded-lg hover:bg-light-red-bg transition-colors flex items-center gap-1.5"
+              >
+                <SparkleIcon className="w-4 h-4" /> AI Mod Advisor
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="border border-gray-300 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Reset All
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
@@ -306,6 +402,24 @@ export default function Customize() {
           </div>
         </main>
       </div>
+
+      <SaveBuildModal
+        open={showSaveModal}
+        initialName={savedBuild?.name}
+        saving={savingBuild}
+        error={saveError}
+        onSave={handleSaveBuild}
+        onClose={() => setShowSaveModal(false)}
+      />
+
+      <AiAdvisorModal
+        open={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        vehicle={vehicle}
+        optionsByCategory={optionsByCategory}
+        customizationCategories={vehicle.customizationCategories}
+        onApply={handleApplyRecommendations}
+      />
     </div>
   );
 }

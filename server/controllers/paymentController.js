@@ -65,13 +65,22 @@ exports.initOrderPayment = async (req, res) => {
 // holds the account in escrow (hashed password included) inside the
 // Payment's meta until the one-time listing fee actually clears.
 exports.initVendorListingFeePayment = async (req, res) => {
-  const { name, email, phone, password, businessName, address, serviceCategory, tradeLicense } = req.body;
+  const { name, email, phone, password, businessName, address, serviceCategory, tradeLicense, location } = req.body;
 
   if (!password || password.length < 6) {
     return res.status(400).json({ message: 'Password must be at least 6 characters' });
   }
   if (!name || !email || !phone || !businessName || !address || !serviceCategory || !tradeLicense) {
     return res.status(400).json({ message: 'All business details are required' });
+  }
+  // Mirrors authController.register's mechanic-center location requirement
+  // (Raad's Nearby Mechanic Locator feature) — this flow creates the vendor
+  // account instead of that endpoint, so it has to enforce the same rule.
+  if (
+    serviceCategory === 'mechanic_center' &&
+    (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number')
+  ) {
+    return res.status(400).json({ message: 'Shop location is required for mechanic centers' });
   }
 
   const existing = await User.findOne({ email });
@@ -86,7 +95,7 @@ exports.initVendorListingFeePayment = async (req, res) => {
     tranId,
     purpose: 'vendor_listing_fee',
     amount: VENDOR_LISTING_FEE,
-    meta: { name, email, phone, password: hashedPassword, businessName, address, serviceCategory, tradeLicense },
+    meta: { name, email, phone, password: hashedPassword, businessName, address, serviceCategory, tradeLicense, location },
   });
 
   res.status(201).json({ tranId, gatewayUrl: buildGatewayUrl(tranId), amount: VENDOR_LISTING_FEE });
@@ -181,7 +190,7 @@ exports.completePayment = async (req, res) => {
   }
 
   // purpose === 'vendor_listing_fee'
-  const { name, email, phone, password, businessName, address, serviceCategory, tradeLicense } = payment.meta;
+  const { name, email, phone, password, businessName, address, serviceCategory, tradeLicense, location } = payment.meta;
 
   const existing = await User.findOne({ email });
   if (existing) {
@@ -190,7 +199,7 @@ exports.completePayment = async (req, res) => {
     return res.status(400).json({ message: 'An account with this email was registered while payment was in progress' });
   }
 
-  const user = await User.create({
+  const userData = {
     name,
     email,
     phone,
@@ -201,7 +210,14 @@ exports.completePayment = async (req, res) => {
     serviceCategory,
     tradeLicense,
     listingFeePaid: true,
-  });
+  };
+  if (serviceCategory === 'mechanic_center') {
+    // GeoJSON requires [lng, lat] order — matches authController.register's
+    // conversion for the same field.
+    userData.location = { type: 'Point', coordinates: [location.lng, location.lat] };
+  }
+
+  const user = await User.create(userData);
 
   payment.status = 'success';
   payment.user = user._id;

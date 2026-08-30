@@ -9,6 +9,11 @@ const OPTIONS = [
     path: '/customize',
   },
   {
+    label: 'My Garage',
+    description: 'Revisit, edit, or share the custom builds you have saved.',
+    path: '/garage',
+  },
+  {
     label: 'Find Parts',
     description: 'Browse the compatible parts catalog for your exact make and model.',
     path: '/parts',

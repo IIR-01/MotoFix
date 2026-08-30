@@ -9,6 +9,7 @@ function getLinks(user) {
     return [
       { label: 'Home', path: '/' },
       { label: 'Customize', path: '/customize' },
+      { label: 'My Garage', path: '/garage' },
       { label: 'Find Parts', path: '/parts' },
       { label: 'Roadside Help', path: '/roadside-request' },
       { label: 'Cart', path: '/cart' },
@@ -18,14 +19,10 @@ function getLinks(user) {
   if (user.role === 'vendor') {
     return user.serviceCategory === 'mechanic_center'
       ? [
-          { label: 'Dashboard', path: '/' },
           { label: 'My Services', path: '/services' },
           { label: 'Requests', path: '/requests' },
         ]
-      : [
-          { label: 'Dashboard', path: '/' },
-          { label: 'My Inventory', path: '/inventory' },
-        ];
+      : [{ label: 'My Inventory', path: '/inventory' }];
   }
   return [];
 }

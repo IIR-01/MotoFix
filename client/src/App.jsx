@@ -15,6 +15,11 @@ import Cart from './pages/Cart';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import PaymentGateway from './pages/PaymentGateway';
+import NearbyMechanics from './pages/NearbyMechanics';
+import VendorRequestDashboard from './pages/VendorRequestDashboard';
+import Review from './pages/Review';
+import MyGarage from './pages/MyGarage';
+import SharedBuild from './pages/SharedBuild';
 
 function ProtectedRoute({ children, role }) {
   const { user, token } = useAuth();
@@ -70,11 +75,7 @@ function AppRoutes() {
         path="/requests"
         element={
           <ProtectedRoute role="vendor">
-            <ComingSoon
-              active="Requests"
-              title="Roadside request dashboard is on its way"
-              description="Incoming roadside assistance requests will show up here once your Vendor Request Dashboard feature is built."
-            />
+            <VendorRequestDashboard />
           </ProtectedRoute>
         }
       />
@@ -83,6 +84,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute role="customer">
             <RequestRoadsideAssistance />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/roadside-request/:requestId/mechanics"
+        element={
+          <ProtectedRoute role="customer">
+            <NearbyMechanics />
           </ProtectedRoute>
         }
       />
@@ -142,8 +151,24 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Module 3 features (Save & Share Custom Build) get their own
-          routes here as they're built. */}
+      <Route
+        path="/customize/review"
+        element={
+          <ProtectedRoute role="customer">
+            <Review />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/garage"
+        element={
+          <ProtectedRoute role="customer">
+            <MyGarage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Public — anyone with the link can view (not edit) a shared build. */}
+      <Route path="/shared/:token" element={<SharedBuild />} />
       <Route path="/" element={<HomeRedirect />} />
     </Routes>
   );
