@@ -48,3 +48,4 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ location: '2dsphere' });
+module.exports = mongoose.model('User', userSchema);
