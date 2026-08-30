@@ -18,6 +18,11 @@ const OPTIONS = [
     description: 'Broken down? Describe the issue and share your location to get help.',
     path: '/roadside-request',
   },
+  {
+    label: 'Order History',
+    description: 'Track past and current parts orders, from checkout to delivery.',
+    path: '/orders',
+  },
 ];
 
 export default function CustomerHome() {

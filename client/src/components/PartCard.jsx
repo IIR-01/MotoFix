@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 function PlaceholderImage() {
   return (
@@ -22,8 +24,17 @@ function PlaceholderImage() {
 
 export default function PartCard({ part }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { user } = useAuth();
+  const { addItem } = useCart();
   const showPlaceholder = !part.imageUrl || imageFailed;
   const outOfStock = part.stock <= 0;
+
+  const handleAddToCart = () => {
+    addItem(part, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1200);
+  };
 
   return (
     <div
@@ -59,6 +70,14 @@ export default function PartCard({ part }) {
           <p className="font-display font-semibold text-primary-red text-lg">{`৳${part.price}`}</p>
           {!outOfStock && <p className="text-sm text-gray-500">{part.stock} in stock</p>}
         </div>
+        {user?.role === 'customer' && !outOfStock && (
+          <button
+            onClick={handleAddToCart}
+            className="mt-2 bg-primary-red hover:bg-dark-red transition-colors text-white text-sm font-medium py-2 rounded-md"
+          >
+            {added ? 'Added to cart' : 'Add to Cart'}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -22,8 +22,15 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const register = (formData) =>
-    apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(formData) });
+  // Customers register directly. Vendors pay a one-time listing fee first —
+  // the account itself only gets created once that payment clears (see
+  // paymentController.completePayment) — so this goes through the payment
+  // session endpoint instead and resolves to { tranId, gatewayUrl, amount }
+  // rather than an account.
+  const register = (formData) => {
+    const path = formData.role === 'vendor' ? '/payments/vendor-listing-fee/init' : '/auth/register';
+    return apiFetch(path, { method: 'POST', body: JSON.stringify(formData) });
+  };
 
   const logout = () => {
     localStorage.removeItem('motofix_token');

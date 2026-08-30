@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 function getLinks(user) {
   if (!user) return [];
@@ -10,6 +11,8 @@ function getLinks(user) {
       { label: 'Customize', path: '/customize' },
       { label: 'Find Parts', path: '/parts' },
       { label: 'Roadside Help', path: '/roadside-request' },
+      { label: 'Cart', path: '/cart' },
+      { label: 'My Orders', path: '/orders' },
     ];
   }
   if (user.role === 'vendor') {
@@ -29,6 +32,7 @@ function getLinks(user) {
 
 export default function Navbar({ active }) {
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
   const navigate = useNavigate();
   const links = getLinks(user);
 
@@ -48,13 +52,18 @@ export default function Navbar({ active }) {
           <Link
             key={link.label}
             to={link.path}
-            className={`px-4 py-2 rounded text-sm border ${
+            className={`relative px-4 py-2 rounded text-sm border ${
               active === link.label
                 ? 'bg-primary-red text-white border-primary-red'
                 : 'text-dark-red border-primary-red/50'
             }`}
           >
             {link.label}
+            {link.label === 'Cart' && itemCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-dark-red text-white text-[10px] leading-none rounded-full w-4 h-4 flex items-center justify-center">
+                {itemCount}
+              </span>
+            )}
           </Link>
         ))}
         <button
