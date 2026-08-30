@@ -4,9 +4,38 @@ const Order = require('../models/Order');
 const Part = require('../models/Part');
 const User = require('../models/User');
 const { generateTranId, buildGatewayUrl } = require('../services/sslcommerzService');
+const { sendMail } = require('../services/emailService');
 
 const DELIVERY_CHARGE = 60;
 const VENDOR_LISTING_FEE = 2000;
+
+const orderReceiptHtml = (order) => `
+  <h2>Your MotoFix order is confirmed</h2>
+  <p>Order <strong>${order.orderNumber}</strong> — placed ${new Date(order.createdAt).toLocaleString()}</p>
+  <table cellpadding="6" style="border-collapse: collapse; width: 100%; max-width: 480px;">
+    ${order.items
+      .map(
+        (item) => `
+      <tr>
+        <td>${item.name} (${item.vendorName}) &times; ${item.quantity}</td>
+        <td align="right">&#2547;${item.price * item.quantity}</td>
+      </tr>`
+      )
+      .join('')}
+    <tr><td>Subtotal</td><td align="right">&#2547;${order.subtotal}</td></tr>
+    <tr><td>Delivery charge</td><td align="right">&#2547;${order.deliveryCharge}</td></tr>
+    <tr style="font-weight: bold;"><td>Total paid</td><td align="right">&#2547;${order.totalAmount}</td></tr>
+  </table>
+  <p>You can track this order's status any time from your MotoFix order history.</p>
+`;
+
+const vendorListingFeeReceiptHtml = ({ businessName, tranId, amount }) => `
+  <h2>MotoFix vendor listing fee receipt</h2>
+  <p>Thanks for registering <strong>${businessName}</strong> on MotoFix.</p>
+  <p>Amount paid: <strong>&#2547;${amount}</strong></p>
+  <p>Transaction ID: ${tranId}</p>
+  <p>Your application is now pending verification — we'll notify you once an admin reviews it.</p>
+`;
 
 // POST /api/payments/order/init  (customer)
 // Validates the cart against the DB (never trust client-supplied prices or
@@ -182,9 +211,14 @@ exports.completePayment = async (req, res) => {
     payment.order = order._id;
     await payment.save();
 
-    // No email service is wired up in this project yet — this stands in
-    // for the confirmation receipt described in the spec until one is.
-    console.log(`[MotoFix] Order confirmation receipt for ${order.orderNumber} would be emailed here.`);
+    const customer = await User.findById(payment.user).select('email');
+    if (customer) {
+      await sendMail({
+        to: customer.email,
+        subject: `Your MotoFix order ${order.orderNumber} is confirmed`,
+        html: orderReceiptHtml(order),
+      });
+    }
 
     return res.json({ status: 'success', order });
   }
@@ -223,7 +257,11 @@ exports.completePayment = async (req, res) => {
   payment.user = user._id;
   await payment.save();
 
-  console.log(`[MotoFix] Vendor listing fee receipt for ${email} would be emailed here.`);
+  await sendMail({
+    to: email,
+    subject: 'MotoFix vendor listing fee receipt',
+    html: vendorListingFeeReceiptHtml({ businessName, tranId: payment.tranId, amount: payment.amount }),
+  });
 
   return res.json({
     status: 'success',
