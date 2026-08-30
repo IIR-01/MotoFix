@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import RoutePanel from '../components/RoutePanel';
 
@@ -7,17 +7,35 @@ const inputClass =
   'border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base';
 const labelClass = 'flex flex-col gap-1.5';
 
+const DEFAULT_FORM = {
+  name: '', email: '', phone: '', password: '',
+  businessName: '', address: '', serviceCategory: 'mechanic_center', tradeLicense: '',
+};
+
+// A vendor's form (and captured shop location, for mechanic centers) is
+// kept here across the trip to the payment gateway (see AuthContext
+// .register) so a failed listing-fee payment doesn't force them to redo
+// everything to retry.
+const PENDING_FORM_KEY = 'motofix_pending_vendor_form';
+
+const readPendingVendor = () => {
+  try {
+    const stored = sessionStorage.getItem(PENDING_FORM_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [role, setRole] = useState('customer');
-  const [form, setForm] = useState({
-    name: '', email: '', phone: '', password: '',
-    businessName: '', address: '', serviceCategory: 'mechanic_center', tradeLicense: '',
-  });
+  const routerLocation = useLocation();
+  const [role, setRole] = useState(() => (readPendingVendor() ? 'vendor' : 'customer'));
+  const [form, setForm] = useState(() => readPendingVendor()?.form || DEFAULT_FORM);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [location, setLocation] = useState(null);
+  const [error, setError] = useState(routerLocation.state?.paymentError || '');
+  const [location, setLocation] = useState(() => readPendingVendor()?.location || null);
   const [locationError, setLocationError] = useState('');
 
   const captureLocation = () => {
@@ -43,6 +61,14 @@ export default function Register() {
     }
     try {
       const res = await register({ ...form, role, ...(needsLocation && { location }) });
+      if (res.gatewayUrl) {
+        // Vendor path: account isn't created yet — it's created once the
+        // listing fee payment on the gateway page succeeds.
+        sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location }));
+        navigate(`/payment/gateway/${res.tranId}`);
+        return;
+      }
+      sessionStorage.removeItem(PENDING_FORM_KEY);
       setMessage(res.message);
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {

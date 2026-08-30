@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ManageServices from './pages/ManageServices';
@@ -10,6 +11,10 @@ import RequestRoadsideAssistance from './pages/RequestRoadsideAssistance';
 import CustomerHome from './pages/CustomerHome';
 import ComingSoon from './components/ComingSoon';
 import Customize from './pages/Customize';
+import Cart from './pages/Cart';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
+import PaymentGateway from './pages/PaymentGateway';
 import NearbyMechanics from './pages/NearbyMechanics';
 import VendorRequestDashboard from './pages/VendorRequestDashboard';
 import Review from './pages/Review';
@@ -41,6 +46,11 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      {/* Public: stands in for SSLCommerz's own hosted checkout page, which
+          obviously wouldn't require a MotoFix login either — a vendor
+          paying their listing fee at registration doesn't have an account
+          yet at all. */}
+      <Route path="/payment/gateway/:tranId" element={<PaymentGateway />} />
       <Route
         path="/services"
         element={
@@ -110,6 +120,30 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/cart"
+        element={
+          <ProtectedRoute role="customer">
+            <Cart />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders"
+        element={
+          <ProtectedRoute role="customer">
+            <Orders />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders/:id"
+        element={
+          <ProtectedRoute role="customer">
+            <OrderDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/customize/build"
         element={
           <ProtectedRoute role="customer">
@@ -143,9 +177,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <CartProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </CartProvider>
     </AuthProvider>
   );
 }

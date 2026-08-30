@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import RoutePanel from '../components/RoutePanel';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [message] = useState(location.state?.message || '');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,6 +41,11 @@ export default function Login() {
             <p className="text-gray-500 mt-2">Log in to manage your services and requests.</p>
           </div>
 
+          {message && (
+            <p className="text-sm text-dark-red bg-light-red-bg border border-primary-red/30 rounded-md px-4 py-3">
+              {message}
+            </p>
+          )}
           {error && (
             <p className="text-sm text-primary-red bg-light-red-bg border border-primary-red/30 rounded-md px-4 py-3">
               {error}
