@@ -23,10 +23,10 @@ export function AuthProvider({ children }) {
   };
 
   // Customers register directly. Vendors pay a one-time listing fee first —
-  // the account itself only gets created once that payment clears (see
-  // paymentController.completePayment) — so this goes through the payment
-  // session endpoint instead and resolves to { tranId, gatewayUrl, amount }
-  // rather than an account.
+  // the account itself only gets created once that payment clears on
+  // SSLCommerz (see paymentController's handleSslSuccess) — so this goes
+  // through the payment session endpoint instead and resolves to
+  // { tranId, gatewayUrl, amount } rather than an account.
   const register = (formData) => {
     const path = formData.role === 'vendor' ? '/payments/vendor-listing-fee/init' : '/auth/register';
     return apiFetch(path, { method: 'POST', body: JSON.stringify(formData) });

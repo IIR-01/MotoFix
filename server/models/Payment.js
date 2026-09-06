@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-// One record per SSLCommerz session (real or, for now, simulated — see
-// services/sslcommerzService.js). Two things pay through this: a customer's
-// order checkout, and a vendor's one-time listing fee at registration.
+// One record per SSLCommerz session (see services/sslcommerzService.js).
+// Two things pay through this: a customer's order checkout, and a vendor's
+// one-time listing fee at registration.
 //
 // Neither target exists yet when the session is created — an Order is only
 // created after payment succeeds (so a failed/abandoned payment never leaves

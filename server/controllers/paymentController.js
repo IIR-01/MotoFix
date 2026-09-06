@@ -3,11 +3,27 @@ const Payment = require('../models/Payment');
 const Order = require('../models/Order');
 const Part = require('../models/Part');
 const User = require('../models/User');
-const { generateTranId, buildGatewayUrl } = require('../services/sslcommerzService');
+const { generateTranId, initiateSession, validateTransaction } = require('../services/sslcommerzService');
 const { sendMail } = require('../services/emailService');
 
 const DELIVERY_CHARGE = 60;
 const VENDOR_LISTING_FEE = 2000;
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
+// SSLCommerz redirects/POSTs the customer's browser back to these once
+// they've acted on the hosted checkout page; ipn_url is a separate
+// server-to-server webhook SSLCommerz calls directly (only reachable once
+// this server has a public URL — it's a no-op against localhost, but
+// success_url alone is enough to finalize a payment for local dev).
+function callbackUrls() {
+  return {
+    successUrl: `${SERVER_URL}/api/payments/ssl/success`,
+    failUrl: `${SERVER_URL}/api/payments/ssl/fail`,
+    cancelUrl: `${SERVER_URL}/api/payments/ssl/cancel`,
+    ipnUrl: `${SERVER_URL}/api/payments/ssl/ipn`,
+  };
+}
 
 const orderReceiptHtml = (order) => `
   <h2>Your MotoFix order is confirmed</h2>
@@ -40,8 +56,9 @@ const vendorListingFeeReceiptHtml = ({ businessName, tranId, amount }) => `
 // POST /api/payments/order/init  (customer)
 // Validates the cart against the DB (never trust client-supplied prices or
 // stock) and opens a payment session for it. The order itself isn't created
-// yet — only once the payment actually succeeds (see completePayment) — so
-// an abandoned or failed checkout never leaves a half-placed order behind,
+// yet — only once the payment actually succeeds (see finalizeOrderPayment,
+// called from handleSslSuccess/handleSslIpn) — so an abandoned or failed
+// checkout never leaves a half-placed order behind,
 // and the customer's cart naturally survives untouched for a retry.
 exports.initOrderPayment = async (req, res) => {
   const { items, deliveryAddress } = req.body;
@@ -85,7 +102,20 @@ exports.initOrderPayment = async (req, res) => {
     meta: { items: lineItems, subtotal, deliveryCharge, totalAmount, deliveryAddress: deliveryAddress || '' },
   });
 
-  res.status(201).json({ tranId, gatewayUrl: buildGatewayUrl(tranId), amount: totalAmount });
+  const customer = await User.findById(req.user.id).select('name email phone');
+  try {
+    const gatewayUrl = await initiateSession({
+      tranId,
+      amount: totalAmount,
+      productName: 'MotoFix parts order',
+      customer: { name: customer.name, email: customer.email, phone: customer.phone, address: deliveryAddress || '' },
+      ...callbackUrls(),
+    });
+    res.status(201).json({ tranId, gatewayUrl, amount: totalAmount });
+  } catch (err) {
+    await Payment.deleteOne({ tranId });
+    res.status(502).json({ message: `Could not start payment: ${err.message}` });
+  }
 };
 
 // POST /api/payments/vendor-listing-fee/init  (public — runs before the
@@ -127,15 +157,27 @@ exports.initVendorListingFeePayment = async (req, res) => {
     meta: { name, email, phone, password: hashedPassword, businessName, address, serviceCategory, tradeLicense, location },
   });
 
-  res.status(201).json({ tranId, gatewayUrl: buildGatewayUrl(tranId), amount: VENDOR_LISTING_FEE });
+  try {
+    const gatewayUrl = await initiateSession({
+      tranId,
+      amount: VENDOR_LISTING_FEE,
+      productName: 'MotoFix vendor listing fee',
+      customer: { name, email, phone, address },
+      ...callbackUrls(),
+    });
+    res.status(201).json({ tranId, gatewayUrl, amount: VENDOR_LISTING_FEE });
+  } catch (err) {
+    await Payment.deleteOne({ tranId });
+    res.status(502).json({ message: `Could not start payment: ${err.message}` });
+  }
 };
 
 // GET /api/payments/:tranId  (public)
-// Has to be public: the dummy gateway page loads this before the customer
-// has a token in the vendor-listing-fee case, exactly like a real
-// SSLCommerz hosted page would look up a session with no MotoFix login of
-// its own. Only ever returns the non-sensitive summary a checkout page
-// needs — never the escrowed registration payload or cart contents.
+// Has to be public: the payment-result page polls this before the customer
+// necessarily has a token (the vendor-listing-fee flow creates the account
+// itself only once this reports success). Only ever returns the
+// non-sensitive summary a result page needs — never the escrowed
+// registration payload or cart contents.
 exports.getPayment = async (req, res) => {
   const payment = await Payment.findOne({ tranId: req.params.tranId });
   if (!payment) return res.status(404).json({ message: 'Payment session not found' });
@@ -144,93 +186,73 @@ exports.getPayment = async (req, res) => {
     purpose: payment.purpose,
     amount: payment.amount,
     status: payment.status,
+    // Only meaningful once status is 'success' and purpose is 'order' — lets
+    // the client jump straight to the order page without exposing anything
+    // else in payment.meta (cart contents / escrowed registration payload).
+    orderId: payment.order || undefined,
   });
 };
 
-// POST /api/payments/:tranId/complete  { result: 'success' | 'fail' }  (public)
-// Stands in for SSLCommerz's success/fail redirect + IPN callback. This is
-// the one place that finalizes a purpose: creates the Order, or creates the
-// vendor account, only once payment has actually gone through.
-exports.completePayment = async (req, res) => {
-  const { result } = req.body;
-  if (!['success', 'fail'].includes(result)) {
-    return res.status(400).json({ message: 'result must be "success" or "fail"' });
-  }
+// Creates the Order, decrementing stock, once an order payment has actually
+// cleared. Re-checks stock at the moment of "capture" — it may have sold out
+// between checkout and the customer finishing payment on SSLCommerz's page —
+// so this can't oversell under concurrent checkouts, and rolls back any
+// earlier decrements from this same order before failing it.
+async function finalizeOrderPayment(payment) {
+  const { items, subtotal, deliveryCharge, totalAmount, deliveryAddress } = payment.meta;
 
-  const payment = await Payment.findOne({ tranId: req.params.tranId });
-  if (!payment) return res.status(404).json({ message: 'Payment session not found' });
-  if (payment.status !== 'pending') {
-    return res.status(400).json({ message: `This payment session was already ${payment.status}` });
-  }
-
-  if (result === 'fail') {
-    payment.status = 'failed';
-    await payment.save();
-    return res.json({ status: 'failed' });
-  }
-
-  if (payment.purpose === 'order') {
-    const { items, subtotal, deliveryCharge, totalAmount, deliveryAddress } = payment.meta;
-
-    // Re-check stock at the moment of "capture" — it may have sold out
-    // between checkout and the customer finishing payment. Each update is
-    // conditioned on there still being enough stock, so this can't oversell
-    // under concurrent checkouts.
-    const decremented = [];
-    for (const item of items) {
-      const updated = await Part.findOneAndUpdate(
-        { _id: item.part, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity } }
-      );
-      if (!updated) {
-        // Roll back any earlier decrements from this same order before failing it.
-        for (const done of decremented) {
-          await Part.findByIdAndUpdate(done.part, { $inc: { stock: done.quantity } });
-        }
-        payment.status = 'failed';
-        await payment.save();
-        return res.status(409).json({
-          message: `"${item.name}" sold out before payment could be completed. You have not been charged.`,
-        });
+  const decremented = [];
+  for (const item of items) {
+    const updated = await Part.findOneAndUpdate(
+      { _id: item.part, stock: { $gte: item.quantity } },
+      { $inc: { stock: -item.quantity } }
+    );
+    if (!updated) {
+      for (const done of decremented) {
+        await Part.findByIdAndUpdate(done.part, { $inc: { stock: done.quantity } });
       }
-      decremented.push(item);
+      payment.status = 'failed';
+      await payment.save();
+      return;
     }
-
-    const order = await Order.create({
-      orderNumber: payment.tranId,
-      customer: payment.user,
-      items,
-      subtotal,
-      deliveryCharge,
-      totalAmount,
-      deliveryAddress,
-      tranId: payment.tranId,
-    });
-
-    payment.status = 'success';
-    payment.order = order._id;
-    await payment.save();
-
-    const customer = await User.findById(payment.user).select('email');
-    if (customer) {
-      await sendMail({
-        to: customer.email,
-        subject: `Your MotoFix order ${order.orderNumber} is confirmed`,
-        html: orderReceiptHtml(order),
-      });
-    }
-
-    return res.json({ status: 'success', order });
+    decremented.push(item);
   }
 
-  // purpose === 'vendor_listing_fee'
+  const order = await Order.create({
+    orderNumber: payment.tranId,
+    customer: payment.user,
+    items,
+    subtotal,
+    deliveryCharge,
+    totalAmount,
+    deliveryAddress,
+    tranId: payment.tranId,
+  });
+
+  payment.status = 'success';
+  payment.order = order._id;
+  await payment.save();
+
+  const customer = await User.findById(payment.user).select('email');
+  if (customer) {
+    await sendMail({
+      to: customer.email,
+      subject: `Your MotoFix order ${order.orderNumber} is confirmed`,
+      html: orderReceiptHtml(order),
+    });
+  }
+}
+
+// Creates the vendor account, only once their one-time listing fee has
+// actually cleared.
+async function finalizeVendorListingFeePayment(payment) {
   const { name, email, phone, password, businessName, address, serviceCategory, tradeLicense, location } = payment.meta;
 
   const existing = await User.findOne({ email });
   if (existing) {
     payment.status = 'failed';
     await payment.save();
-    return res.status(400).json({ message: 'An account with this email was registered while payment was in progress' });
+    return;
   }
 
   const userData = {
@@ -262,9 +284,83 @@ exports.completePayment = async (req, res) => {
     subject: 'MotoFix vendor listing fee receipt',
     html: vendorListingFeeReceiptHtml({ businessName, tranId: payment.tranId, amount: payment.amount }),
   });
+}
 
-  return res.json({
-    status: 'success',
-    message: 'Listing fee paid. Registered — your application is pending verification.',
-  });
+// Confirms a pending payment against SSLCommerz's Validation API — never
+// trust val_id/amount/status straight off the callback body, since it's
+// delivered via the customer's browser (or an unauthenticated webhook) and
+// could be forged. Returns true only if the transaction is genuinely valid
+// and paid for the expected amount.
+async function isGenuinelyPaid(payment, valId) {
+  if (!valId) return false;
+  try {
+    const validation = await validateTransaction(valId);
+    const validStatus = validation.status === 'VALID' || validation.status === 'VALIDATED';
+    const amountOk = Math.abs(parseFloat(validation.amount) - payment.amount) < 1;
+    return validStatus && amountOk && validation.currency === 'BDT';
+  } catch (err) {
+    console.error('[MotoFix] SSLCommerz validation call failed:', err.message);
+    return false;
+  }
+}
+
+function redirectToResult(res, tranId) {
+  res.redirect(302, `${CLIENT_URL}/payment/result/${tranId}`);
+}
+
+// POST /api/payments/ssl/success  (public — SSLCommerz sends the customer's
+// browser here after a successful hosted checkout)
+exports.handleSslSuccess = async (req, res) => {
+  const { tran_id: tranId, val_id: valId } = req.body;
+  const payment = await Payment.findOne({ tranId });
+  if (!payment) return res.status(404).send('Payment session not found');
+
+  // Already finalized — e.g. the IPN webhook got here first. Just send the
+  // browser on; re-running finalize would double-create the order/account.
+  if (payment.status !== 'pending') return redirectToResult(res, tranId);
+
+  if (!(await isGenuinelyPaid(payment, valId))) {
+    payment.status = 'failed';
+    await payment.save();
+    return redirectToResult(res, tranId);
+  }
+
+  if (payment.purpose === 'order') await finalizeOrderPayment(payment);
+  else await finalizeVendorListingFeePayment(payment);
+
+  redirectToResult(res, tranId);
+};
+
+// POST /api/payments/ssl/fail and /ssl/cancel  (public)
+exports.handleSslFail = async (req, res) => {
+  const { tran_id: tranId } = req.body;
+  const payment = await Payment.findOne({ tranId });
+  if (payment && payment.status === 'pending') {
+    payment.status = 'failed';
+    await payment.save();
+  }
+  redirectToResult(res, tranId);
+};
+
+// POST /api/payments/ssl/ipn  (public — server-to-server webhook SSLCommerz
+// calls directly; only reachable once this server has a public URL, so it's
+// a no-op against localhost, but gives production a second, more reliable
+// path to finalize a payment in case the customer's browser never makes it
+// back to success_url.)
+exports.handleSslIpn = async (req, res) => {
+  const { tran_id: tranId, val_id: valId } = req.body;
+  const payment = await Payment.findOne({ tranId });
+  if (!payment) return res.sendStatus(404);
+  if (payment.status !== 'pending') return res.sendStatus(200);
+
+  if (!(await isGenuinelyPaid(payment, valId))) {
+    payment.status = 'failed';
+    await payment.save();
+    return res.sendStatus(200);
+  }
+
+  if (payment.purpose === 'order') await finalizeOrderPayment(payment);
+  else await finalizeVendorListingFeePayment(payment);
+
+  res.sendStatus(200);
 };
