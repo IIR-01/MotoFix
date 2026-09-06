@@ -65,7 +65,9 @@ export default function Register() {
         // Vendor path: account isn't created yet — it's created once the
         // listing fee payment on the gateway page succeeds.
         sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location }));
-        navigate(`/payment/gateway/${res.tranId}`);
+        // Full-page redirect: this is now SSLCommerz's own hosted checkout
+        // domain, not a route inside this app.
+        window.location.href = res.gatewayUrl;
         return;
       }
       sessionStorage.removeItem(PENDING_FORM_KEY);

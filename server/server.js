@@ -8,6 +8,9 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
+// SSLCommerz posts its success/fail/cancel/ipn callbacks as form-encoded
+// bodies, not JSON.
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => res.send('MotoFix API is running'));
 

@@ -26,7 +26,7 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true },
     deliveryAddress: { type: String, default: '' },
     // Orders only ever get created after a successful payment (see
-    // paymentController.completePayment), so this starts at 'Processing'
+    // paymentController.finalizeOrderPayment), so this starts at 'Processing'
     // rather than needing a separate payment-status field.
     status: {
       type: String,
