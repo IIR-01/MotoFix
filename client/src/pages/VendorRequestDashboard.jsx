@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
+<<<<<<< HEAD
 import RequestMap from '../components/RequestMap';
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 import { apiFetch } from '../api/client';
 
 const STATUS_STYLE = {
@@ -11,6 +14,7 @@ const STATUS_STYLE = {
   Cancelled: 'bg-gray-50 text-gray-400 border-gray-200',
 };
 
+<<<<<<< HEAD
 const ACTIVE_STATUSES = ['Pending', 'Accepted', 'En Route'];
 
 const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
@@ -32,6 +36,17 @@ export default function VendorRequestDashboard() {
       const data = await apiFetch('/vendor/requests');
       setRequests(data.requests);
       setMechanicLocation(data.mechanicLocation);
+=======
+export default function VendorRequestDashboard() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actioningId, setActioningId] = useState(null);
+
+  const load = async () => {
+    try {
+      setRequests(await apiFetch('/vendor/requests'));
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
       setError('');
     } catch (err) {
       setError(err.message);
@@ -42,6 +57,7 @@ export default function VendorRequestDashboard() {
 
   useEffect(() => { load(); }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     requests
       .filter((r) => ['Accepted', 'En Route'].includes(r.status) && !routes[r._id])
@@ -56,6 +72,8 @@ export default function VendorRequestDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requests]);
 
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   const respond = async (id, decision) => {
     setActioningId(id);
     setError('');
@@ -82,8 +100,11 @@ export default function VendorRequestDashboard() {
     }
   };
 
+<<<<<<< HEAD
   const activeRequests = requests.filter((r) => ACTIVE_STATUSES.includes(r.status));
 
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   return (
     <div>
       <Navbar active="Requests" />
@@ -97,6 +118,7 @@ export default function VendorRequestDashboard() {
           </p>
         )}
 
+<<<<<<< HEAD
         {!loading && mechanicLocation?.coordinates && activeRequests.length > 0 && (
           <div className="mt-6">
             <RequestMap
@@ -113,6 +135,8 @@ export default function VendorRequestDashboard() {
           </div>
         )}
 
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
         {loading ? (
           <p className="text-gray-400 mt-6">Loading&hellip;</p>
         ) : requests.length === 0 ? (
@@ -130,6 +154,7 @@ export default function VendorRequestDashboard() {
                   <div>
                     <p className="font-medium">{r.issueCategory}</p>
                     <p className="text-sm opacity-70 mt-0.5">{r.customer?.name} &middot; {r.customer?.phone}</p>
+<<<<<<< HEAD
                     {r.locationName && <p className="text-sm opacity-70 mt-0.5">{r.locationName}</p>}
                     <p className="text-xs opacity-60 mt-0.5">{new Date(r.createdAt).toLocaleString()}</p>
                     {r.distanceFromMe && (
@@ -138,6 +163,9 @@ export default function VendorRequestDashboard() {
                         {r.distanceFromMe.estimated && ' (estimated)'}
                       </p>
                     )}
+=======
+                    <p className="text-xs opacity-60 mt-0.5">{new Date(r.createdAt).toLocaleString()}</p>
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
                   </div>
                   <span className="text-xs px-3 py-1.5 rounded-full border bg-white shrink-0">{r.status}</span>
                 </div>
@@ -155,6 +183,7 @@ export default function VendorRequestDashboard() {
                   </div>
                 )}
 
+<<<<<<< HEAD
                 {['Accepted', 'En Route'].includes(r.status) && mechanicLocation?.coordinates && (
                   <div className="mt-3">
                     <RequestMap
@@ -177,6 +206,8 @@ export default function VendorRequestDashboard() {
                   </div>
                 )}
 
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
                 {r.status === 'Accepted' && (
                   <button disabled={actioningId === r._id} onClick={() => advance(r._id, 'En Route')}
                     className="bg-primary-red text-white text-sm font-medium px-4 py-2 rounded-md mt-3 disabled:opacity-50">

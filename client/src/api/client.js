@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+=======
+const API_BASE = 'http://localhost:5000/api';
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 
 // Every teammate's pages call the backend through this one helper, so the
 // auth token is attached automatically and errors are handled consistently.
@@ -39,6 +43,7 @@ export async function apiFetch(path, options = {}) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Something went wrong');
   return data;
+<<<<<<< HEAD
 }
 // Best-effort reverse geocoding — turns {lat,lng} into a short place name
 // for display. Deliberately never throws: callers fall back to showing
@@ -52,4 +57,6 @@ export async function reverseGeocode(lat, lng) {
   } catch {
     return null;
   }
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 }

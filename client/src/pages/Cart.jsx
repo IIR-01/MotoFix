@@ -1,5 +1,9 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+=======
+import { useLocation, Link } from 'react-router-dom';
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 import Navbar from '../components/Navbar';
 import { useCart } from '../context/CartContext';
 import { apiFetch } from '../api/client';
@@ -12,7 +16,10 @@ const DELIVERY_CHARGE_PREVIEW = 60;
 export default function Cart() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
   const location = useLocation();
+<<<<<<< HEAD
   const navigate = useNavigate();
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   const [error, setError] = useState(location.state?.paymentError || '');
   const [placing, setPlacing] = useState(false);
 
@@ -29,7 +36,13 @@ export default function Cart() {
           items: items.map((i) => ({ partId: i.partId, quantity: i.quantity })),
         }),
       });
+<<<<<<< HEAD
       navigate(`/payment/gateway/${res.tranId}`);
+=======
+      // Full-page redirect: this is now SSLCommerz's own hosted checkout
+      // domain, not a route inside this app.
+      window.location.href = res.gatewayUrl;
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
     } catch (err) {
       setError(err.message);
       setPlacing(false);

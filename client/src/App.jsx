@@ -14,7 +14,11 @@ import Customize from './pages/Customize';
 import Cart from './pages/Cart';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+<<<<<<< HEAD
 import PaymentGateway from './pages/PaymentGateway';
+=======
+import PaymentResult from './pages/PaymentResult';
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 import NearbyMechanics from './pages/NearbyMechanics';
 import VendorRequestDashboard from './pages/VendorRequestDashboard';
 import Review from './pages/Review';
@@ -46,11 +50,18 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+<<<<<<< HEAD
       {/* Public: stands in for SSLCommerz's own hosted checkout page, which
           obviously wouldn't require a MotoFix login either — a vendor
           paying their listing fee at registration doesn't have an account
           yet at all. */}
       <Route path="/payment/gateway/:tranId" element={<PaymentGateway />} />
+=======
+      {/* Public: this is where SSLCommerz's hosted checkout sends the
+          customer's browser back to — a vendor paying their listing fee at
+          registration doesn't have an account, let alone a token, yet. */}
+      <Route path="/payment/result/:tranId" element={<PaymentResult />} />
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
       <Route
         path="/services"
         element={

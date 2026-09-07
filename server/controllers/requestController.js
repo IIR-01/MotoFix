@@ -1,7 +1,11 @@
 const Request = require('../models/Request');
 const User = require('../models/User');
+<<<<<<< HEAD
 const { getDistanceMatrix, getRoute } = require('../services/orsClient');
 const { reverseGeocode } = require('../services/geocode');
+=======
+const { getDistanceMatrix } = require('../services/orsClient');
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 
 const SEARCH_RADIUS_METERS = 15000; // 15km — wide enough to nearly always find someone in a city
 
@@ -14,6 +18,7 @@ exports.createRequest = async (req, res) => {
     }
     const request = await Request.create({ customer: req.user.id, issueCategory, location });
     res.status(201).json(request);
+<<<<<<< HEAD
 
     // Resolve a display name in the background — no reason to make the
     // customer wait on this before they get their confirmation, and it'll
@@ -23,6 +28,8 @@ exports.createRequest = async (req, res) => {
         if (name) return Request.findByIdAndUpdate(request._id, { locationName: name });
       })
       .catch((err) => console.error('Background geocoding failed for request', request._id, err.message));
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -31,11 +38,16 @@ exports.createRequest = async (req, res) => {
 // GET /api/requests/mine
 exports.getMyRequests = async (req, res) => {
   const requests = await Request.find({ customer: req.user.id })
+<<<<<<< HEAD
     .populate('targetVendor', 'businessName phone location')
+=======
+    .populate('targetVendor', 'businessName phone')
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
     .sort('-createdAt');
   res.json(requests);
 };
 
+<<<<<<< HEAD
 // GET /api/requests/:id/route — road route from the customer to their
 // assigned mechanic, once one has accepted.
 exports.getRequestRoute = async (req, res) => {
@@ -56,6 +68,8 @@ exports.getRequestRoute = async (req, res) => {
   }
 };
 
+=======
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 // DELETE /api/requests/:id — only while nothing has happened yet.
 // Once a mechanic is engaged (Accepted/En Route), use cancel instead, which
 // preserves the record rather than erasing it.
@@ -76,9 +90,13 @@ exports.cancelRequest = async (req, res) => {
   if (!['Accepted', 'En Route'].includes(request.status)) {
     return res.status(400).json({ message: 'Only an accepted, in-progress request can be cancelled' });
   }
+<<<<<<< HEAD
   if (request.timeAccepted && request.timeAccepted.getTime() < Date.now() - 10 * 60 * 1000) {
     return res.status(400).json({ message: 'Only requests accepted within 10 minutes can be cancelled' });
   }
+=======
+
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   request.status = 'Cancelled';
   await request.save();
 

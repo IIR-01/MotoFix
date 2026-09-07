@@ -57,6 +57,7 @@ async function getDistanceMatrix(source, destinations) {
     return fallbackMatrix(source, destinations);
   }
 }
+<<<<<<< HEAD
 // Turn-by-turn route geometry between two points (for drawing an actual
 // road-following line on a map), using ORS's Directions API. Same key,
 // same graceful fallback philosophy as getDistanceMatrix above — if
@@ -100,3 +101,7 @@ function fallbackRoute(source, destination) {
   };
 }
 module.exports = { getDistanceMatrix, getRoute, haversineDistance };
+=======
+
+module.exports = { getDistanceMatrix, haversineDistance };
+>>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
