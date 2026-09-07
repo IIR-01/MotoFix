@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Every teammate's pages call the backend through this one helper, so the
 // auth token is attached automatically and errors are handled consistently.
@@ -39,4 +39,17 @@ export async function apiFetch(path, options = {}) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Something went wrong');
   return data;
+}
+// Best-effort reverse geocoding — turns {lat,lng} into a short place name
+// for display. Deliberately never throws: callers fall back to showing
+// coordinates when this returns null.
+export async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(`${API_BASE}/geocode/reverse?lat=${lat}&lng=${lng}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.name || null;
+  } catch {
+    return null;
+  }
 }

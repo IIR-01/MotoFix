@@ -1,22 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import Navbar from '../components/Navbar';
+import RequestMap from '../components/RequestMap';
 import { apiFetch } from '../api/client';
-
-const customerIcon = L.divIcon({
-  className: '',
-  html: '<div style="width:16px;height:16px;background:#D62839;border:3px solid white;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,0.4);"></div>',
-  iconSize: [16, 16],
-});
-
-const mechanicIcon = L.divIcon({
-  className: '',
-  html: '<div style="width:14px;height:14px;background:#1A1414;border:2px solid white;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,0.4);"></div>',
-  iconSize: [14, 14],
-});
 
 const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
 const formatDuration = (s) => {
@@ -84,20 +70,19 @@ export default function NearbyMechanics() {
           <>
             {requestLocation && (
               <div className="rounded-xl overflow-hidden mt-6 border border-gray-200" style={{ height: 280 }}>
-                <MapContainer center={[requestLocation.lat, requestLocation.lng]} zoom={13} style={{ height: '100%', width: '100%' }}>
-                  <TileLayer
-                    attribution="&copy; OpenStreetMap contributors"
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <Marker position={[requestLocation.lat, requestLocation.lng]} icon={customerIcon}>
-                    <Popup>You</Popup>
-                  </Marker>
-                  {candidates.map((c) => (
-                    <Marker key={c.id} position={[c.location.coordinates[1], c.location.coordinates[0]]} icon={mechanicIcon}>
-                      <Popup>{c.businessName}</Popup>
-                    </Marker>
-                  ))}
-                </MapContainer>
+                {requestLocation && (
+                  <div className="mt-6">
+                    <RequestMap
+                      self={{ lat: requestLocation.lat, lng: requestLocation.lng, label: 'You' }}
+                      markers={candidates.map((c) => ({
+                        id: c.id,
+                        lat: c.location.coordinates[1],
+                        lng: c.location.coordinates[0],
+                        label: `${c.businessName} — ${formatDistance(c.distanceMeters)}, ${formatDuration(c.durationSeconds)}`,
+                      }))}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

@@ -1,6 +1,7 @@
 const Request = require('../models/Request');
 const User = require('../models/User');
-const { getDistanceMatrix } = require('../services/orsClient');
+const { getDistanceMatrix, getRoute } = require('../services/orsClient');
+const { reverseGeocode } = require('../services/geocode');
 
 const SEARCH_RADIUS_METERS = 15000; // 15km — wide enough to nearly always find someone in a city
 
@@ -13,6 +14,15 @@ exports.createRequest = async (req, res) => {
     }
     const request = await Request.create({ customer: req.user.id, issueCategory, location });
     res.status(201).json(request);
+
+    // Resolve a display name in the background — no reason to make the
+    // customer wait on this before they get their confirmation, and it'll
+    // be ready well before a mechanic actually looks at their dashboard.
+    reverseGeocode(location.lat, location.lng)
+      .then(({ name }) => {
+        if (name) return Request.findByIdAndUpdate(request._id, { locationName: name });
+      })
+      .catch((err) => console.error('Background geocoding failed for request', request._id, err.message));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -21,9 +31,29 @@ exports.createRequest = async (req, res) => {
 // GET /api/requests/mine
 exports.getMyRequests = async (req, res) => {
   const requests = await Request.find({ customer: req.user.id })
-    .populate('targetVendor', 'businessName phone')
+    .populate('targetVendor', 'businessName phone location')
     .sort('-createdAt');
   res.json(requests);
+};
+
+// GET /api/requests/:id/route — road route from the customer to their
+// assigned mechanic, once one has accepted.
+exports.getRequestRoute = async (req, res) => {
+  try {
+    const request = await Request.findOne({ _id: req.params.id, customer: req.user.id })
+      .populate('targetVendor', 'location');
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+    if (!request.targetVendor?.location?.coordinates) {
+      return res.status(400).json({ message: 'No mechanic location available yet' });
+    }
+
+    const source = [request.location.lng, request.location.lat];
+    const destination = request.targetVendor.location.coordinates;
+    const route = await getRoute(source, destination);
+    res.json(route);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // DELETE /api/requests/:id — only while nothing has happened yet.
@@ -46,7 +76,9 @@ exports.cancelRequest = async (req, res) => {
   if (!['Accepted', 'En Route'].includes(request.status)) {
     return res.status(400).json({ message: 'Only an accepted, in-progress request can be cancelled' });
   }
-
+  if (request.timeAccepted && request.timeAccepted.getTime() < Date.now() - 10 * 60 * 1000) {
+    return res.status(400).json({ message: 'Only requests accepted within 10 minutes can be cancelled' });
+  }
   request.status = 'Cancelled';
   await request.save();
 

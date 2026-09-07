@@ -57,5 +57,46 @@ async function getDistanceMatrix(source, destinations) {
     return fallbackMatrix(source, destinations);
   }
 }
+// Turn-by-turn route geometry between two points (for drawing an actual
+// road-following line on a map), using ORS's Directions API. Same key,
+// same graceful fallback philosophy as getDistanceMatrix above — if
+// there's no key or the call fails, we fall back to a straight line
+// between the two points instead of showing no line at all.
+async function getRoute(source, destination) {
+  if (!process.env.ORS_API_KEY) {
+    return fallbackRoute(source, destination);
+  }
 
-module.exports = { getDistanceMatrix, haversineDistance };
+  try {
+    const res = await fetch('https://api.openrouteservice.org/v2/directions/driving-car/geojson', {
+      method: 'POST',
+      headers: { Authorization: process.env.ORS_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coordinates: [source, destination] }),
+    });
+
+    if (!res.ok) throw new Error(`ORS responded ${res.status}`);
+    const data = await res.json();
+    const feature = data.features[0];
+
+    return {
+      coordinates: feature.geometry.coordinates, // [ [lng,lat], [lng,lat], ... ]
+      distance: feature.properties.summary.distance,
+      duration: feature.properties.summary.duration,
+      estimated: false,
+    };
+  } catch (err) {
+    console.error('ORS directions call failed, falling back to a straight line:', err.message);
+    return fallbackRoute(source, destination);
+  }
+}
+
+function fallbackRoute(source, destination) {
+  const distance = haversineDistance(source, destination);
+  return {
+    coordinates: [source, destination],
+    distance,
+    duration: distance / AVERAGE_CITY_SPEED_MPS,
+    estimated: true,
+  };
+}
+module.exports = { getDistanceMatrix, getRoute, haversineDistance };

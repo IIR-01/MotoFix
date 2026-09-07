@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import RoutePanel from '../components/RoutePanel';
+import { reverseGeocode } from '../api/client';
 
 const inputClass =
   'border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base';
@@ -36,16 +37,26 @@ export default function Register() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState(routerLocation.state?.paymentError || '');
   const [location, setLocation] = useState(() => readPendingVendor()?.location || null);
+  const [locationName, setLocationName] = useState(() => readPendingVendor()?.locationName || '');
+  const [resolvingName, setResolvingName] = useState(false);
   const [locationError, setLocationError] = useState('');
 
   const captureLocation = () => {
     setLocationError('');
+    setLocationName('');
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser.');
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
+      async (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setLocation(coords);
+        setResolvingName(true);
+        const name = await reverseGeocode(coords.lat, coords.lng);
+        setLocationName(name || '');
+        setResolvingName(false);
+      },
       () => setLocationError('Could not get your location. Please allow location access and try again.')
     );
   };
@@ -64,7 +75,7 @@ export default function Register() {
       if (res.gatewayUrl) {
         // Vendor path: account isn't created yet — it's created once the
         // listing fee payment on the gateway page succeeds.
-        sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location }));
+        sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location, locationName }));
         navigate(`/payment/gateway/${res.tranId}`);
         return;
       }
@@ -174,7 +185,7 @@ export default function Register() {
                   <span className="w-3 h-3 bg-primary-red rounded-full" />
                   {location ? (
                     <p className="text-sm font-medium text-dark-red">
-                      Shop location shared — {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                      Shop location shared — {resolvingName ? 'looking up address…' : (locationName || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`)}
                     </p>
                   ) : (
                     <>

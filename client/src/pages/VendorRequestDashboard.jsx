@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
+import RequestMap from '../components/RequestMap';
 import { apiFetch } from '../api/client';
 
 const STATUS_STYLE = {
@@ -10,15 +11,27 @@ const STATUS_STYLE = {
   Cancelled: 'bg-gray-50 text-gray-400 border-gray-200',
 };
 
+const ACTIVE_STATUSES = ['Pending', 'Accepted', 'En Route'];
+
+const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`);
+const formatDuration = (s) => {
+  const mins = Math.round(s / 60);
+  return mins < 1 ? '<1 min' : `${mins} min`;
+};
+
 export default function VendorRequestDashboard() {
   const [requests, setRequests] = useState([]);
+  const [mechanicLocation, setMechanicLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actioningId, setActioningId] = useState(null);
+  const [routes, setRoutes] = useState({});
 
   const load = async () => {
     try {
-      setRequests(await apiFetch('/vendor/requests'));
+      const data = await apiFetch('/vendor/requests');
+      setRequests(data.requests);
+      setMechanicLocation(data.mechanicLocation);
       setError('');
     } catch (err) {
       setError(err.message);
@@ -28,6 +41,20 @@ export default function VendorRequestDashboard() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    requests
+      .filter((r) => ['Accepted', 'En Route'].includes(r.status) && !routes[r._id])
+      .forEach(async (r) => {
+        try {
+          const route = await apiFetch(`/vendor/requests/${r._id}/route`);
+          setRoutes((prev) => ({ ...prev, [r._id]: route }));
+        } catch {
+          // No route available — the card just won't show a map for this one.
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requests]);
 
   const respond = async (id, decision) => {
     setActioningId(id);
@@ -55,6 +82,8 @@ export default function VendorRequestDashboard() {
     }
   };
 
+  const activeRequests = requests.filter((r) => ACTIVE_STATUSES.includes(r.status));
+
   return (
     <div>
       <Navbar active="Requests" />
@@ -66,6 +95,22 @@ export default function VendorRequestDashboard() {
           <p className="text-sm text-primary-red bg-light-red-bg border border-primary-red/30 rounded-md px-4 py-3 mt-5">
             {error}
           </p>
+        )}
+
+        {!loading && mechanicLocation?.coordinates && activeRequests.length > 0 && (
+          <div className="mt-6">
+            <RequestMap
+              self={{ lat: mechanicLocation.coordinates[1], lng: mechanicLocation.coordinates[0], label: 'Your shop' }}
+              markers={activeRequests.map((r) => ({
+                id: r._id,
+                lat: r.location.lat,
+                lng: r.location.lng,
+                label: `${r.issueCategory}${r.locationName ? ` — ${r.locationName}` : ''}${
+                  r.distanceFromMe ? ` (${formatDistance(r.distanceFromMe.distance)}, ${formatDuration(r.distanceFromMe.duration)})` : ''
+                }`,
+              }))}
+            />
+          </div>
         )}
 
         {loading ? (
@@ -85,7 +130,14 @@ export default function VendorRequestDashboard() {
                   <div>
                     <p className="font-medium">{r.issueCategory}</p>
                     <p className="text-sm opacity-70 mt-0.5">{r.customer?.name} &middot; {r.customer?.phone}</p>
+                    {r.locationName && <p className="text-sm opacity-70 mt-0.5">{r.locationName}</p>}
                     <p className="text-xs opacity-60 mt-0.5">{new Date(r.createdAt).toLocaleString()}</p>
+                    {r.distanceFromMe && (
+                      <p className="text-xs opacity-60 mt-0.5">
+                        {formatDistance(r.distanceFromMe.distance)} &middot; {formatDuration(r.distanceFromMe.duration)} away
+                        {r.distanceFromMe.estimated && ' (estimated)'}
+                      </p>
+                    )}
                   </div>
                   <span className="text-xs px-3 py-1.5 rounded-full border bg-white shrink-0">{r.status}</span>
                 </div>
@@ -100,6 +152,28 @@ export default function VendorRequestDashboard() {
                       className="text-dark-red text-sm px-4 py-2 border border-primary-red/30 rounded-md disabled:opacity-50">
                       Reject
                     </button>
+                  </div>
+                )}
+
+                {['Accepted', 'En Route'].includes(r.status) && mechanicLocation?.coordinates && (
+                  <div className="mt-3">
+                    <RequestMap
+                      self={{ lat: mechanicLocation.coordinates[1], lng: mechanicLocation.coordinates[0], label: 'Your shop' }}
+                      markers={[{
+                        id: r._id,
+                        lat: r.location.lat,
+                        lng: r.location.lng,
+                        label: r.locationName ? `${r.customer?.name || 'Customer'} — ${r.locationName}` : (r.customer?.name || 'Customer'),
+                      }]}
+                      route={routes[r._id]?.coordinates?.map(([lng, lat]) => [lat, lng])}
+                      height={200}
+                    />
+                    {routes[r._id] && (
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        {formatDistance(routes[r._id].distance)} &middot; {formatDuration(routes[r._id].duration)}
+                        {routes[r._id].estimated && ' (estimated)'}
+                      </p>
+                    )}
                   </div>
                 )}
 

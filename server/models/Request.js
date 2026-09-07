@@ -12,6 +12,11 @@ const requestSchema = new mongoose.Schema(
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
     },
+    // Resolved once, in the background, right after creation — see
+    // createRequest in requestController.js. Null until that resolves
+    // (or if it fails), so anything displaying it should treat it as
+    // optional.
+    locationName: { type: String, default: null },
     // Full lifecycle defined here even though Module 2 only ever creates
     // 'Pending' requests — Module 3's Vendor Request Dashboard updates the
     // rest of these on the same Request documents.
