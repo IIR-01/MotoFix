@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-<<<<<<< HEAD
 import RequestMap from '../components/RequestMap';
 import { apiFetch, reverseGeocode } from '../api/client';
 
@@ -13,12 +12,6 @@ const formatDuration = (s) => {
   return mins < 1 ? '<1 min' : `${mins} min`;
 };
 
-=======
-import { apiFetch } from '../api/client';
-
-const ISSUES = ['Flat Tire', 'Battery Failure', 'Engine Trouble', 'Other'];
-
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 function RatingForm({ request, onRated }) {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
@@ -62,17 +55,13 @@ function RatingForm({ request, onRated }) {
 export default function RequestRoadsideAssistance() {
   const [issue, setIssue] = useState('Flat Tire');
   const [location, setLocation] = useState(null);
-<<<<<<< HEAD
   const [locationName, setLocationName] = useState('');
   const [resolvingName, setResolvingName] = useState(false);
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   const [locationError, setLocationError] = useState('');
   const [requests, setRequests] = useState([]);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState(null);
-<<<<<<< HEAD
   const [routes, setRoutes] = useState({});
 
   const captureLocation = () => {
@@ -88,14 +77,6 @@ export default function RequestRoadsideAssistance() {
         setLocationName(name || '');
         setResolvingName(false);
       },
-=======
-
-  const captureLocation = () => {
-    setLocationError('');
-    if (!navigator.geolocation) { setLocationError('Geolocation is not supported by your browser.'); return; }
-    navigator.geolocation.getCurrentPosition(
-      (position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
       () => setLocationError('Could not get your location. Please allow location access and try again.')
     );
   };
@@ -106,7 +87,6 @@ export default function RequestRoadsideAssistance() {
 
   useEffect(() => { captureLocation(); loadRequests(); }, []);
 
-<<<<<<< HEAD
   useEffect(() => {
     requests
       .filter((r) => ['Accepted', 'En Route'].includes(r.status) && !routes[r._id])
@@ -121,8 +101,6 @@ export default function RequestRoadsideAssistance() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requests]);
 
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   const handleSubmit = async () => {
     if (!location) { setLocationError('Share your location before submitting.'); return; }
     setSubmitting(true);
@@ -179,11 +157,7 @@ export default function RequestRoadsideAssistance() {
           <span className="w-3.5 h-3.5 bg-primary-red rounded-full" />
           {location ? (
             <p className="font-medium text-dark-red text-sm">
-<<<<<<< HEAD
               Location shared &mdash; {resolvingName ? 'looking up address…' : (locationName || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`)}
-=======
-              Location shared &mdash; {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
             </p>
           ) : (
             <p className="text-sm text-gray-500">Sharing your current location&hellip;</p>
@@ -210,10 +184,7 @@ export default function RequestRoadsideAssistance() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-medium text-dark-red text-sm">{r.issueCategory}</p>
-<<<<<<< HEAD
                       {r.locationName && <p className="text-xs text-gray-500 mt-0.5">{r.locationName}</p>}
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
                       <p className="text-xs text-gray-500 mt-0.5">{new Date(r.createdAt).toLocaleString()}</p>
                       {r.targetVendor && <p className="text-xs text-gray-500 mt-0.5">Sent to {r.targetVendor.businessName}</p>}
                     </div>
@@ -222,7 +193,6 @@ export default function RequestRoadsideAssistance() {
                     </span>
                   </div>
 
-<<<<<<< HEAD
                   {['Accepted', 'En Route'].includes(r.status) && r.targetVendor?.location?.coordinates && (
                     <div className="mt-3">
                       <RequestMap
@@ -245,8 +215,6 @@ export default function RequestRoadsideAssistance() {
                     </div>
                   )}
 
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
                   <div className="flex gap-3 mt-3 flex-wrap">
                     {r.status === 'Pending' && !r.targetVendor && (
                       <Link to={`/roadside-request/${r._id}/mechanics`} className="bg-primary-red text-white text-xs font-medium px-3 py-1.5 rounded-md">

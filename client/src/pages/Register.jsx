@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import RoutePanel from '../components/RoutePanel';
-<<<<<<< HEAD
 import { reverseGeocode } from '../api/client';
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
 
 const inputClass =
   'border border-gray-300 focus:border-primary-red focus:outline-none rounded-md px-4 py-3 text-base';
@@ -40,25 +37,18 @@ export default function Register() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState(routerLocation.state?.paymentError || '');
   const [location, setLocation] = useState(() => readPendingVendor()?.location || null);
-<<<<<<< HEAD
   const [locationName, setLocationName] = useState(() => readPendingVendor()?.locationName || '');
   const [resolvingName, setResolvingName] = useState(false);
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
   const [locationError, setLocationError] = useState('');
 
   const captureLocation = () => {
     setLocationError('');
-<<<<<<< HEAD
     setLocationName('');
-=======
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser.');
       return;
     }
     navigator.geolocation.getCurrentPosition(
-<<<<<<< HEAD
       async (position) => {
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
         setLocation(coords);
@@ -67,9 +57,6 @@ export default function Register() {
         setLocationName(name || '');
         setResolvingName(false);
       },
-=======
-      (position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
       () => setLocationError('Could not get your location. Please allow location access and try again.')
     );
   };
@@ -88,15 +75,8 @@ export default function Register() {
       if (res.gatewayUrl) {
         // Vendor path: account isn't created yet — it's created once the
         // listing fee payment on the gateway page succeeds.
-<<<<<<< HEAD
         sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location, locationName }));
         navigate(`/payment/gateway/${res.tranId}`);
-=======
-        sessionStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ form, location }));
-        // Full-page redirect: this is now SSLCommerz's own hosted checkout
-        // domain, not a route inside this app.
-        window.location.href = res.gatewayUrl;
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
         return;
       }
       sessionStorage.removeItem(PENDING_FORM_KEY);
@@ -205,11 +185,7 @@ export default function Register() {
                   <span className="w-3 h-3 bg-primary-red rounded-full" />
                   {location ? (
                     <p className="text-sm font-medium text-dark-red">
-<<<<<<< HEAD
                       Shop location shared — {resolvingName ? 'looking up address…' : (locationName || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`)}
-=======
-                      Shop location shared — {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
->>>>>>> 1ac65f253f4e61b550de509defdd255d6ba8b75f
                     </p>
                   ) : (
                     <>
