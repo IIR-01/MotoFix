@@ -4,7 +4,8 @@ A full-stack web platform for vehicle (car and motorcycle) service, parts, and c
 
 Built as the CSE471 course project at BRAC University.
 
-Features
+Features:
+
 Role-based accounts: customer, vendor, and admin, with JWT authentication and bcrypt password hashing
 
 Roadside assistance: customers submit a request with their location and issue type (flat tire, battery failure, engine trouble, other), see ranked nearby mechanics on a map, pick one, and track the request from Pending to Completed
